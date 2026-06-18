@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はなしのたね</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #07080F;
+    --card-bg: #111525;
+    --card-border: rgba(255,255,255,0.08);
+    --text: #F0EEFC;
+    --sub: #7A7FA8;
+    --cat-daily:   #3DFFD0;
+    --cat-moshi:   #FF6EFF;
+    --cat-value:   #6EBBFF;
+    --cat-serious: #FFD93D;
+    --glow-daily:   rgba(61,255,208,0.25);
+    --glow-moshi:   rgba(255,110,255,0.25);
+    --glow-value:   rgba(110,187,255,0.25);
+    --glow-serious: rgba(255,217,61,0.25);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 48px;
+    user-select: none;
+    overflow-x: hidden;
+  }
+
+  #starCanvas {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+
+  header {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 480px;
+    padding: 36px 0 24px; text-align: center;
+  }
+  .app-title {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 900; font-size: 28px; letter-spacing: 0.2em;
+    color: var(--text);
+    text-shadow: 0 0 20px rgba(110,187,255,0.6), 0 0 40px rgba(110,187,255,0.3);
+  }
+  .app-sub {
+    font-size: 11px; color: var(--sub); letter-spacing: 0.18em;
+    margin-top: 6px; text-transform: uppercase;
+  }
+
+  /* カテゴリタブ */
+  .cat-tabs {
+    position: relative; z-index: 1;
+    display: flex; gap: 8px;
+    width: 100%; max-width: 480px;
+    margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .cat-tab {
+    flex: 1 1 auto; padding: 8px 4px;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 100px; background: transparent;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px; color: var(--sub); cursor: pointer;
+    transition: all 0.2s ease; text-align: center;
+    white-space: nowrap; letter-spacing: 0.05em;
+  }
+  .cat-tab.active[data-cat="daily"]   { border-color: var(--cat-daily);   color: var(--cat-daily);   box-shadow: 0 0 12px var(--glow-daily),   inset 0 0 12px var(--glow-daily); }
+  .cat-tab.active[data-cat="moshi"]   { border-color: var(--cat-moshi);   color: var(--cat-moshi);   box-shadow: 0 0 12px var(--glow-moshi),   inset 0 0 12px var(--glow-moshi); }
+  .cat-tab.active[data-cat="value"]   { border-color: var(--cat-value);   color: var(--cat-value);   box-shadow: 0 0 12px var(--glow-value),   inset 0 0 12px var(--glow-value); }
+  .cat-tab.active[data-cat="serious"] { border-color: var(--cat-serious); color: var(--cat-serious); box-shadow: 0 0 12px var(--glow-serious), inset 0 0 12px var(--glow-serious); }
+
+  /* カードエリア */
+  .card-area {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 480px;
+  }
+  .card-wrapper {
+    position: relative; width: 100%; padding-bottom: 90%;
+  }
+  .card {
+    position: absolute; inset: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 28px;
+    transition: box-shadow 0.3s ease;
+    overflow: hidden;
+  }
+  .card[data-cat="daily"]   { box-shadow: 0 0 40px var(--glow-daily),   0 0 80px rgba(61,255,208,0.08); }
+  .card[data-cat="moshi"]   { box-shadow: 0 0 40px var(--glow-moshi),   0 0 80px rgba(255,110,255,0.08); }
+  .card[data-cat="value"]   { box-shadow: 0 0 40px var(--glow-value),   0 0 80px rgba(110,187,255,0.08); }
+  .card[data-cat="serious"] { box-shadow: 0 0 40px var(--glow-serious), 0 0 80px rgba(255,217,61,0.08); }
+
+  /* ノイズ */
+  .card-noise {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    border-radius: 24px; pointer-events: none; opacity: 0.4;
+  }
+
+  /* カード上部ライン */
+  .card::before {
+    content: ''; position: absolute;
+    top: 0; left: 20%; right: 20%; height: 1px; border-radius: 100px;
+  }
+  [data-cat="daily"]::before   { background: linear-gradient(90deg, transparent, var(--cat-daily), transparent); }
+  [data-cat="moshi"]::before   { background: linear-gradient(90deg, transparent, var(--cat-moshi), transparent); }
+  [data-cat="value"]::before   { background: linear-gradient(90deg, transparent, var(--cat-value), transparent); }
+  [data-cat="serious"]::before { background: linear-gradient(90deg, transparent, var(--cat-serious), transparent); }
+
+  /* カード内コンテンツ */
+  .card-content {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center; width: 100%; gap: 12px;
+  }
+  .card-cat-label {
+    font-size: 10px; letter-spacing: 0.2em;
+    font-weight: 700; text-transform: uppercase;
+  }
+  [data-cat="daily"]   .card-cat-label { color: var(--cat-daily);   text-shadow: 0 0 10px var(--cat-daily); }
+  [data-cat="moshi"]   .card-cat-label { color: var(--cat-moshi);   text-shadow: 0 0 10px var(--cat-moshi); }
+  [data-cat="value"]   .card-cat-label { color: var(--cat-value);   text-shadow: 0 0 10px var(--cat-value); }
+  [data-cat="serious"] .card-cat-label { color: var(--cat-serious); text-shadow: 0 0 10px var(--cat-serious); }
+
+  .card-question {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 700; font-size: clamp(16px, 4.5vw, 21px);
+    line-height: 1.75; text-align: center; color: var(--text);
+  }
+  .card-hint {
+    font-size: 11px; color: var(--sub);
+    line-height: 1.8; text-align: center;
+  }
+
+  /* 回答入力エリア */
+  .answer-area {
+    width: 100%; margin-top: 8px;
+  }
+  .answer-textarea {
+    width: 100%; min-height: 72px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; line-height: 1.7;
+    padding: 12px 14px; resize: none;
+    outline: none; transition: border-color 0.2s;
+    user-select: text;
+  }
+  .answer-textarea:focus { border-color: rgba(255,255,255,0.35); }
+  .answer-textarea::placeholder { color: var(--sub); }
+
+  .card.exit-up { animation: cardExit 0.3s cubic-bezier(.4,0,.2,1) forwards; }
+  @keyframes cardExit {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-50px) scale(0.96); opacity: 0; }
+  }
+  .card.enter { animation: cardEnter 0.3s cubic-bezier(.4,0,.2,1) forwards; }
+  @keyframes cardEnter {
+    0%   { transform: translateY(30px) scale(0.97); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  /* カウンター */
+  .counter {
+    position: relative; z-index: 1;
+    margin-top: 14px; font-size: 11px;
+    color: var(--sub); letter-spacing: 0.12em;
+  }
+
+  /* ボタン */
+  .actions {
+    position: relative; z-index: 1;
+    display: flex; gap: 12px;
+    margin-top: 16px; width: 100%; max-width: 480px;
+  }
+  .btn {
+    flex: 1; padding: 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; background: rgba(255,255,255,0.04);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; color: var(--sub);
+    cursor: pointer; transition: all 0.15s ease; letter-spacing: 0.04em;
+  }
+  .btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-next {
+    flex: 2; font-weight: 700; color: #07080F;
+  }
+  .btn-next[data-cat="daily"]   { background: var(--cat-daily);   border-color: var(--cat-daily); }
+  .btn-next[data-cat="moshi"]   { background: var(--cat-moshi);   border-color: var(--cat-moshi); }
+  .btn-next[data-cat="value"]   { background: var(--cat-value);   border-color: var(--cat-value); }
+  .btn-next[data-cat="serious"] { background: var(--cat-serious); border-color: var(--cat-serious); }
+  .btn-next:hover:not(:disabled) { opacity: 0.85; }
+
+  /* 空カード */
+  .empty-card {
+    position: absolute; inset: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+  }
+  .empty-card p { font-size: 14px; color: var(--sub); }
+  .btn-reset {
+    padding: 10px 28px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 100px; background: transparent;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; color: var(--text); cursor: pointer;
+  }
+
+  /* 分析画面 */
+  #analysisScreen {
+    display: none;
+    position: relative; z-index: 1;
+    width: 100%; max-width: 480px;
+    flex-direction: column; gap: 16px;
+  }
+  #analysisScreen.visible { display: flex; }
+
+  .analysis-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px; padding: 32px 28px;
+    box-shadow: 0 0 40px var(--glow-value);
+  }
+  .analysis-title {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 900; font-size: 18px;
+    color: var(--cat-value);
+    text-shadow: 0 0 10px var(--cat-value);
+    letter-spacing: 0.1em; margin-bottom: 20px;
+  }
+  .analysis-body {
+    font-size: 13px; line-height: 2.0;
+    color: var(--text); white-space: pre-wrap;
+  }
+  .analysis-loading {
+    font-size: 13px; color: var(--sub);
+    text-align: center; padding: 20px 0;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  .qa-log {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px; padding: 20px 24px;
+  }
+  .qa-log-title {
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--sub); text-transform: uppercase; margin-bottom: 14px;
+  }
+  .qa-item { margin-bottom: 14px; }
+  .qa-item:last-child { margin-bottom: 0; }
+  .qa-q {
+    font-size: 11px; color: var(--sub);
+    margin-bottom: 4px; line-height: 1.6;
+  }
+  .qa-a {
+    font-size: 13px; color: var(--text); line-height: 1.7;
+  }
+
+  .btn-restart {
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; background: rgba(255,255,255,0.04);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; color: var(--text);
+    cursor: pointer; text-align: center;
+    transition: background 0.15s;
+  }
+  .btn-restart:hover { background: rgba(255,255,255,0.09); }
+
+  /* メイン画面 */
+  #mainScreen {
+    display: flex; flex-direction: column;
+    align-items: center; width: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .card.exit-up, .card.enter { animation: none; transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starCanvas"></canvas>
+
+<header>
+  <div class="app-title">はなしのたね</div>
+  <div class="app-sub">conversation cards</div>
+</header>
+
+<!-- メイン画面 -->
+<div id="mainScreen">
+  <div class="cat-tabs" id="catTabs">
+    <button class="cat-tab active" data-cat="daily">日常・趣味</button>
+    <button class="cat-tab" data-cat="moshi">もしも</button>
+    <button class="cat-tab" data-cat="value">価値観</button>
+    <button class="cat-tab" data-cat="serious">シリアス</button>
+  </div>
+
+  <div class="card-area">
+    <div class="card-wrapper" id="cardWrapper"></div>
+  </div>
+
+  <div class="counter" id="counter">1 / 10</div>
+
+  <div class="actions">
+    <button class="btn" id="btnShuffle" onclick="shuffleCards()">シャッフル</button>
+    <button class="btn btn-next" id="btnNext" data-cat="daily" onclick="nextCard()">次の話題 →</button>
+  </div>
+</div>
+
+<!-- 分析画面 -->
+<div id="analysisScreen">
+  <div class="analysis-card" id="analysisCard">
+    <div class="analysis-title">✦ 分析結果</div>
+    <div class="analysis-body" id="analysisBody">
+      <div class="analysis-loading">分析しています...</div>
+    </div>
+  </div>
+  <div class="qa-log" id="qaLog"></div>
+  <button class="btn-restart" onclick="restartApp()">もう一度やってみる</button>
+</div>
+
+<script>
+const cards = {
+  daily: [
+    { q: "最近ハマってることは？", hint: "ゲーム・食べ物・動画など" },
+    { q: "子どものころ、好きだった遊びは？", hint: "外遊び・ゲーム・ごっこ遊び…" },
+    { q: "休日の過ごし方は？", hint: "理想と現実どっちでも" },
+    { q: "最近食べておいしかったものは？", hint: "お店でも自炊でも" },
+    { q: "行ってみたい旅行先は？", hint: "国内・海外・架空でもOK" },
+    { q: "好きな映画やアニメを1本あげるとしたら？", hint: "理由も聞いてみよう" },
+    { q: "いまの趣味、いつからはじめた？", hint: "きっかけや最初の記憶" },
+    { q: "最近うれしかった小さなことは？", hint: "ちょっとしたことでいい" },
+    { q: "得意料理・作れる料理は？", hint: "「これだけは作れる」もの" },
+    { q: "音楽をよく聴くほう？最近のお気に入りは？", hint: "ジャンル・アーティスト・曲名など" },
+    { q: "今日の昼ご飯何食べた？", hint: "コンビニでも手抜きでも正直に" },
+    { q: "コンビニで必ず買うお菓子は？", hint: "定番・季節限定・最近のお気に入り" },
+    { q: "最近ハマってるゲームは？", hint: "スマホ・コンシューマ・PCなんでも" },
+    { q: "YouTubeでよく見るチャンネルは？", hint: "ジャンルだけでもOK" },
+    { q: "一番好きなラーメンの味は？", hint: "醤油・塩・味噌・豚骨…" },
+    { q: "学生時代の面白い失敗談は？", hint: "笑えるやつ教えて" },
+    { q: "寝る時間と起きる時間は？", hint: "理想でも現実でも" },
+    { q: "最近買ってよかったものは？", hint: "金額問わず" },
+    { q: "カラオケで歌う曲は？", hint: "十八番・最近覚えた曲" },
+    { q: "アニメ・漫画のおすすめは？", hint: "ジャンル問わず" },
+    { q: "犬派？猫派？", hint: "どっちも好きはどっちかというと？" },
+    { q: "好きな飲み物は？コーヒー派？紅茶派？", hint: "ホット・アイスの好みも" },
+    { q: "一番好きなファストフード店は？", hint: "定番からちょっとマイナーなとこまで" },
+    { q: "最近笑った出来事は？", hint: "なんでも" },
+    { q: "子どもの頃の夢は？", hint: "いまと比べてどう？" },
+    { q: "得意料理・作れる料理は？", hint: "「これだけは任せて」というもの" },
+    { q: "暑い派？寒い派？", hint: "夏と冬どっちが好き？" },
+    { q: "好きな季節は？", hint: "理由も聞かせて" },
+    { q: "運動してる？筋トレしてる？", hint: "習慣・最近はじめたこと" },
+    { q: "最近見た映画やドラマは？", hint: "おすすめできる？" },
+    { q: "ポテトは細い派？太い派？", hint: "シューストリング vs ウェッジ" },
+    { q: "朝はパン派？ご飯派？", hint: "決まってない人はどっちが多い？" },
+    { q: "好きなアイス何味？", hint: "定番・季節限定・コンビニ限定など" },
+    { q: "最近コンビニで見つけた当たり商品は？", hint: "食べ物・飲み物・日用品なんでも" },
+    { q: "自販機でつい買っちゃう飲み物は？", hint: "季節問わず定番のやつ" },
+    { q: "スマホの充電は何％で焦る？", hint: "人によってラインが全然違う" },
+    { q: "アラーム何個かけてる？", hint: "時間帯・スヌーズの使い方も" },
+    { q: "一番長く続いた趣味は？", hint: "いまも続いてる？" },
+    { q: "今でも信じてるジンクスある？", hint: "験担ぎ・ルーティン的なやつ" },
+    { q: "給食で好きだったメニューは？", hint: "揚げパン・ソフト麺・カレー…" },
+    { q: "遅刻をごまかしたことある？", hint: "どんな言い訳した？" },
+    { q: "一番笑った先生・先輩いる？", hint: "エピソードも聞かせて" },
+    { q: "カバンの中で一番いらない物は？", hint: "なぜか持ち続けてるもの" },
+    { q: "ネットで見つけた面白い話ある？", hint: "スレ・動画・記事なんでも" },
+    { q: "一番好きな季節限定商品は？", hint: "食べ物・飲み物・コラボグッズなど" },
+    { q: "おすすめの暇つぶしは？", hint: "一人でも試せるやつ" },
+    { q: "寝る前に必ずやることは？", hint: "ルーティン・習慣・こだわり" },
+    { q: "最近「年取ったな」と思った瞬間は？", hint: "体・趣味・感覚の変化など" },
+    { q: "これだけは理解できない食べ物は？", hint: "苦手・謎の組み合わせ・納得いかないやつ" },
+    { q: "ポテチは箸で食べる派？手で食べる派？", hint: "状況によって違う？" },
+    { q: "寝るとき靴下履く？", hint: "季節によって変わる？" },
+    { q: "プリンは固め派？とろとろ派？", hint: "カラメルの好みも" },
+    { q: "カップ焼きそばのお湯捨て失敗したことある？", hint: "その後どうした？" },
+    { q: "一番変な夢ってどんなの？", hint: "覚えてる限りで" },
+    { q: "UFOを信じる？", hint: "理由も聞かせて" },
+    { q: "幽霊はいると思う？", hint: "体験談があれば" },
+    { q: "どうでもいい特技ある？", hint: "役に立たないやつほどいい" },
+    { q: "最近やらかした小さな失敗は？", hint: "笑い話になってるやつ" },
+  ],
+  moshi: [
+    { q: "もし1週間、仕事も義務もなく自由に使えるとしたら？", hint: "何をする？どこへ行く？" },
+    { q: "もし動物に生まれ変われるとしたら、何がいい？", hint: "理由も聞くと盛り上がる" },
+    { q: "一つだけ超能力をもらえるなら何を選ぶ？", hint: "どんな場面で使う？" },
+    { q: "もし「過去の自分」に一言だけ伝えられるとしたら？", hint: "何歳のときに？" },
+    { q: "もし明日から記憶がリセットされるとしたら、何をする？", hint: "一番残したいことは？" },
+    { q: "もし今の自分が全然違う職業についていたら？", hint: "向いてそうな仕事・やってみたい仕事" },
+    { q: "タイムスリップできるなら過去？未来？", hint: "何年くらい行きたい？" },
+    { q: "もし「味」がなくなったら一番困る食べものは？", hint: "何のために食べてる？" },
+    { q: "もし自分がゲームのキャラクターだったらどんなスキルを持つ？", hint: "職業・特技・弱点も" },
+    { q: "もし言語の壁がなくなったら、誰に話しかけてみたい？", hint: "歴史上の人物でも" },
+    { q: "明日から1週間休みなら何する？", hint: "理想のプランを教えて" },
+    { q: "100万円もらったら何に使う？", hint: "貯金・旅行・推し活…" },
+    { q: "一生同じ料理しか食べられないなら何？", hint: "毎日食べても飽きないもの" },
+    { q: "宝くじが当たったら仕事辞める？", hint: "辞める場合その後どうする？" },
+    { q: "1日だけ透明人間になれたらなにする？", hint: "正直に教えて" },
+    { q: "100回見ても飽きない映画やアニメある？", hint: "それはなぜ？" },
+    { q: "無料なら一生食べ放題にしたいものは？", hint: "毎日でも飽きないもの" },
+    { q: "一生無料になるなら何がいい？", hint: "食べ物以外でも" },
+    { q: "動物を1匹飼うなら何？", hint: "現実的じゃなくてもOK" },
+    { q: "空を飛ぶ・瞬間移動、どっちが欲しい？", hint: "使い道も考えてみて" },
+    { q: "一週間スマホ禁止と一週間外出禁止ならどっち？", hint: "どっちがきつい？" },
+    { q: "一生夏と一生冬ならどっち？", hint: "服装・食事・生活がどう変わる？" },
+    { q: "一日だけ小学生に戻れるなら何する？", hint: "会いたい人・やりたいこと" },
+    { q: "もし10億円もらえたら何する？", hint: "使い道・優先順位" },
+    { q: "もし1年間仕事も学校もなくなったら？", hint: "何をして過ごす？" },
+    { q: "好きな時代に行けるなら何時代？", hint: "歴史好きじゃなくてもOK" },
+    { q: "一日だけ動物になれるなら何になる？", hint: "理由も聞かせて" },
+    { q: "世界中どこでも住めるなら？", hint: "都市・田舎・海外・気候の好みも" },
+    { q: "一つだけ才能を手に入れられるなら？", hint: "音楽・スポーツ・語学…" },
+    { q: "有名人と友達になれるなら誰？", hint: "芸能人・アスリート・歴史上の人物も" },
+    { q: "タイムマシンで過去と未来どっちに行く？", hint: "何年くらい行きたい？" },
+    { q: "無人島に一人だけ連れて行くなら誰？", hint: "実在でも架空でも" },
+    { q: "宝くじが当たったら誰に最初に言う？", hint: "なぜその人？" },
+    { q: "100万円を今日中に使い切れと言われたら？", hint: "具体的に何を買う？" },
+    { q: "スポーツ選手になれるなら何の競技？", hint: "得意不得意関係なく" },
+    { q: "ゲームの世界に入れるならどのゲーム？", hint: "理由も聞かせて" },
+    { q: "一日だけ総理大臣になったら？", hint: "最初に何をする？" },
+    { q: "不老不死になれるならなる？", hint: "条件があるとしたら？" },
+    { q: "好きな職業を無料で一日体験できるなら？", hint: "現実的じゃなくてもOK" },
+    { q: "一週間だけ別の性別になったら何する？", hint: "やってみたいこと" },
+    { q: "空を飛べるようになったら最初にどこへ行く？", hint: "国内？海外？宇宙？" },
+    { q: "1か月旅行できるなら国内？海外？", hint: "行き先・一人か複数か" },
+    { q: "芸能人になったら何をしたい？", hint: "俳優・歌手・Youtuber…" },
+    { q: "好きな能力を3つ選べるなら？", hint: "組み合わせも考えてみて" },
+    { q: "一生ゲーム無料なら何を遊ぶ？", hint: "タイトル・ジャンル" },
+    { q: "好きな車を一台もらえるなら？", hint: "車種・こだわり" },
+    { q: "今日が人生最後の日なら何する？", hint: "正直に" },
+    { q: "何でも一つ願いが叶うなら？", hint: "「もっと願いを」はなしで" },
+    { q: "自分の人生を映画にするならタイトルは？", hint: "ジャンルは何になる？" },
+  ],
+  value: [
+    { q: "お金と時間、どっちが大事だと思う？", hint: "状況によって変わる？" },
+    { q: "「がんばる」ことと「無理しない」こと、どうバランスを取ってる？", hint: "自分なりのルールはある？" },
+    { q: "誰かに感謝を伝えるのが得意？それとも苦手？", hint: "どうして？" },
+    { q: "自分が大切にしている「ルーティン」はある？", hint: "朝・夜・週ごとのこだわりなど" },
+    { q: "「正直に言う」と「相手を傷つけない」、両立できると思う？", hint: "自分はどっち寄り？" },
+    { q: "好きなものを人に勧めるほう？自分だけで楽しむほう？", hint: "ジャンルによって違う？" },
+    { q: "失敗したとき、自分をどうやって立て直す？", hint: "具体的な行動や考え方" },
+    { q: "「孤独」と「一人の時間」、自分にとって違いはある？", hint: "どんなときに感じる？" },
+    { q: "誰かに「変わったね」と言われたらどう感じる？", hint: "うれしい？複雑？" },
+    { q: "自分の中で「譲れないこと」はなに？", hint: "仕事・関係・生活スタイルなど" },
+    { q: "努力と才能、どっちが大事だと思う？", hint: "経験から感じることは？" },
+    { q: "友達は多い方がいい？少なくても深い方がいい？", hint: "いまの自分はどっち寄り？" },
+    { q: "幸せって何だと思う？", hint: "自分なりの答えを" },
+    { q: "人生で一番大事にしたいものは？", hint: "家族・自由・お金・健康…" },
+    { q: "尊敬する人はどんな人？", hint: "有名人でも身近な人でも" },
+    { q: "嘘は絶対ダメ？場合によってはOK？", hint: "どんな嘘は許せる？" },
+    { q: "約束は何があっても守る派？", hint: "守れなかったときどうする？" },
+    { q: "勝ち負けって気になる方？", hint: "どんな場面で出やすい？" },
+    { q: "お金があれば幸せになれると思う？", hint: "正直なところ" },
+    { q: "運と実力、どっちが重要だと思う？", hint: "自分の経験からどう感じる？" },
+    { q: "失敗はした方がいいと思う？", hint: "自分の失敗談もあれば" },
+    { q: "チャレンジする派？慎重派？", hint: "場面によって違う？" },
+    { q: "「楽しさ」と「安定」ならどっちを選ぶ？", hint: "今の自分ならどっち？" },
+    { q: "理想の大人ってどんな人？", hint: "子どもの頃と今で変わった？" },
+    { q: "人に好かれることは大事だと思う？", hint: "好かれたいと思う方？" },
+    { q: "プライドは高い方がいいと思う？", hint: "自分はどのくらい？" },
+    { q: "友達に一番求めることは？", hint: "価値観・距離感・共通の趣味…" },
+    { q: "自分の長所は何だと思う？", hint: "他人に言われたことでも" },
+    { q: "短所は直したい？そのままでいい？", hint: "今一番気になる短所は？" },
+    { q: "ストレスはどうやって発散する？", hint: "有効なやつ教えて" },
+    { q: "人生で一番頑張ったことは？", hint: "結果より過程でもいい" },
+    { q: "自分は運がいい方だと思う？", hint: "エピソードがあれば" },
+    { q: "将来一番やりたいことは？", hint: "仕事でも私生活でも" },
+    { q: "どんな人と一緒にいると落ち着く？", hint: "共通点・雰囲気・距離感" },
+    { q: "人生で一番大切な思い出は？", hint: "話せる範囲で" },
+  ],
+  serious: [
+    { q: "いつから「大人」になったと感じた？", hint: "きっかけはなんだった？" },
+    { q: "泣いた最後はいつ？どんなときだった？", hint: "話したくなければスキップOK" },
+    { q: "「孤独」を感じるのはどんな瞬間？", hint: "思い出せる場面はある？" },
+    { q: "自分が変われたと思う出来事がある？", hint: "よい変化でも、そうじゃなくても" },
+    { q: "「ありがとう」と言いそびれている人はいる？", hint: "なぜ言えていないんだろう" },
+    { q: "もし「もう一度やり直せる」とすれば、選ぶこと・選ばないことは？", hint: "後悔とは少し違う話" },
+    { q: "誰にも言えていないことで、話しても大丈夫そうなことは？", hint: "プレッシャーなし、話せる範囲で" },
+    { q: "自分のことを一番わかっているのは誰だと思う？", hint: "自分自身？誰か他の人？" },
+    { q: "「弱い自分」を見せられる相手がいる？", hint: "どんなときに見せる？" },
+    { q: "10年後の自分に期待していること、不安なことは？", hint: "正直に言うと" },
+  ],
+};
+
+const catLabels = { daily: "daily", moshi: "moshi", value: "value", serious: "serious" };
+const TOTAL = 10;
+
+let currentCat = "daily";
+let deck = [];
+let index = 0;
+let isAnimating = false;
+let answers = []; // {q, a} の配列
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function loadCat(cat) {
+  currentCat = cat;
+  deck = shuffle(cards[cat]);
+  index = 0;
+  answers = [];
+  restoreCard();
+  setCardContent();
+  updateCounter();
+  document.getElementById("btnNext").dataset.cat = cat;
+}
+
+function restoreCard() {
+  const wrapper = document.getElementById("cardWrapper");
+  wrapper.innerHTML = `
+    <div class="card" id="mainCard" data-cat="${currentCat}">
+      <canvas class="card-noise" id="noiseCanvas"></canvas>
+      <div class="card-content">
+        <div class="card-cat-label" id="catLabel"></div>
+        <div class="card-question" id="questionText"></div>
+        <div class="card-hint" id="hintText"></div>
+        <div class="answer-area">
+          <textarea class="answer-textarea" id="answerInput" placeholder="ここに答えを入力..." rows="3"></textarea>
+        </div>
+      </div>
+    </div>`;
+  // textareaのクリックでカードclickが伝播しないよう
+  document.getElementById("answerInput").addEventListener("click", e => e.stopPropagation());
+  initNoise();
+}
+
+function setCardContent() {
+  if (index >= TOTAL || index >= deck.length) {
+    // 全問終了 → 分析画面へ
+    showAnalysis();
+    return;
+  }
+  const data = deck[index];
+  document.getElementById("mainCard").dataset.cat = currentCat;
+  document.getElementById("catLabel").textContent = catLabels[currentCat];
+  document.getElementById("questionText").textContent = data.q;
+  document.getElementById("hintText").textContent = data.hint;
+}
+
+function nextCard() {
+  if (isAnimating) return;
+  const answerEl = document.getElementById("answerInput");
+  const answer = answerEl ? answerEl.value.trim() : "";
+
+  // 回答を記録（空でも記録）
+  answers.push({ q: deck[index].q, a: answer || "（回答なし）" });
+
+  if (answers.length >= TOTAL) {
+    showAnalysis();
+    return;
+  }
+
+  isAnimating = true;
+  const card = document.getElementById("mainCard");
+  if (!card) return;
+  card.classList.add("exit-up");
+  card.addEventListener("animationend", () => {
+    index++;
+    restoreCard();
+    setCardContent();
+    const newCard = document.getElementById("mainCard");
+    if (newCard) {
+      newCard.classList.add("enter");
+      newCard.addEventListener("animationend", () => { newCard.classList.remove("enter"); isAnimating = false; }, { once: true });
+    } else { isAnimating = false; }
+    updateCounter();
+  }, { once: true });
+}
+
+function shuffleCards() {
+  deck = shuffle(cards[currentCat]);
+  index = 0;
+  answers = [];
+  restoreCard();
+  setCardContent();
+  updateCounter();
+}
+
+function updateCounter() {
+  const el = document.getElementById("counter");
+  if (!el) return;
+  el.textContent = `${answers.length + 1} / ${TOTAL}`;
+}
+
+function showAnalysis() {
+  // 画面切り替え
+  document.getElementById("mainScreen").style.display = "none";
+  document.querySelector(".cat-tabs").style.display = "none";
+  const screen = document.getElementById("analysisScreen");
+  screen.classList.add("visible");
+
+  // Q&Aログ表示
+  const log = document.getElementById("qaLog");
+  log.innerHTML = `<div class="qa-log-title">あなたの回答</div>` +
+    answers.map((item, i) => `
+      <div class="qa-item">
+        <div class="qa-q">Q${i+1}. ${item.q}</div>
+        <div class="qa-a">${item.a}</div>
+      </div>`).join("");
+
+  // API呼び出し
+  runAnalysis();
+}
+
+async function runAnalysis() {
+  const bodyEl = document.getElementById("analysisBody");
+  bodyEl.innerHTML = `<div class="analysis-loading">分析しています...</div>`;
+
+  const qaText = answers.map((item, i) =>
+    `Q${i+1}: ${item.q}\nA: ${item.a}`
+  ).join("\n\n");
+
+  const prompt = `以下は、ある人物が答えた10個の会話カードの回答です。
+
+${qaText}
+
+この回答をもとに、心理学的な観点から分析してください。
+
+【重要な出力ルール】
+- マークダウン記法（#、##、**、*、- など）は一切使わないこと
+- 見出しは「■ 〜」の形式のみ使うこと
+- 箇条書きは使わず、文章（段落）で書くこと
+
+【出力フォーマット】
+以下の構成で出力してください。
+
+■ 価値観・動機の傾向
+（内発的動機・外発的動機、快楽原則・現実原則、自己開示傾向など心理学的に分析。200字程度）
+
+■ 思考・認知スタイル
+（論理優先か感情優先か、抽象思考か具体思考か、リスク回避傾向など。200字程度）
+
+■ 対人関係パターン
+（愛着スタイル、境界線の引き方、共感スタイルなどの傾向。200字程度）
+
+■ 自己像・アイデンティティ
+（自己評価の傾向、変化への態度、時間軸の感覚など。200字程度）
+
+■ ひとことで言うと（ゆるめ）
+（上の分析をふまえて、親しみやすい言葉で「あなたってこういう人だよね」的にまとめる。ユーモアを添えてOK。100字程度）
+
+※ 断定的な決めつけを避け、「〜の傾向が見られる」「〜が推察される」などの表現を使うこと。`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === "text")?.text || "分析結果を取得できませんでした。";
+    bodyEl.textContent = text;
+  } catch (e) {
+    bodyEl.textContent = "通信エラーが発生しました。もう一度お試しください。";
+  }
+}
+
+function restartApp() {
+  answers = [];
+  index = 0;
+  document.getElementById("analysisScreen").classList.remove("visible");
+  document.getElementById("mainScreen").style.display = "flex";
+  document.querySelector(".cat-tabs").style.display = "flex";
+  loadCat(currentCat);
+}
+
+// カテゴリタブ
+document.getElementById("catTabs").addEventListener("click", (e) => {
+  const tab = e.target.closest(".cat-tab");
+  if (!tab) return;
+  document.querySelectorAll(".cat-tab").forEach(t => t.classList.remove("active"));
+  tab.classList.add("active");
+  loadCat(tab.dataset.cat);
+});
+
+// カードクリックで次へ（textareaを除く）
+document.querySelector(".card-area").addEventListener("click", (e) => {
+  if (e.target.closest(".answer-textarea")) return;
+  // クリックでは進まない（ボタンのみ）
+});
+
+// ブラウン管ノイズ
+let noiseRaf = null;
+function initNoise() {
+  if (noiseRaf) { cancelAnimationFrame(noiseRaf); noiseRaf = null; }
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById("noiseCanvas");
+    if (!canvas) return;
+    const card = document.getElementById("mainCard");
+    const rect = card.getBoundingClientRect();
+    canvas.width  = Math.round(rect.width)  || 400;
+    canvas.height = Math.round(rect.height) || 360;
+    const ctx = canvas.getContext("2d");
+    let frame = 0;
+    function drawNoise() {
+      frame++;
+      if (frame % 3 !== 0) { noiseRaf = requestAnimationFrame(drawNoise); return; }
+      const w = canvas.width, h = canvas.height;
+      const imgData = ctx.createImageData(w, h);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const v = Math.random() > 0.5 ? 255 : 0;
+        d[i] = d[i+1] = d[i+2] = v;
+        d[i+3] = Math.random() * 120 + 20;
+      }
+      if (Math.random() < 0.12) {
+        const ly = Math.floor(Math.random() * h);
+        const lh = Math.floor(Math.random() * 4) + 1;
+        for (let y = ly; y < Math.min(ly+lh, h); y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            d[idx] = d[idx+1] = d[idx+2] = 255; d[idx+3] = 180;
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      noiseRaf = requestAnimationFrame(drawNoise);
+    }
+    drawNoise();
+  });
+}
+
+loadCat("daily");
+
+// 星空Canvas
+(function() {
+  const canvas = document.getElementById("starCanvas");
+  const ctx = canvas.getContext("2d");
+  let W, H, stars = [], nebulae = [];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < 200; i++) stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.2+0.2, alpha: Math.random()*0.7+0.2, speed: Math.random()*0.3+0.05, ts: Math.random()*0.02+0.005, td: Math.random()>0.5?1:-1, color: pc() });
+    for (let i = 0; i < 15; i++) stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*2+1.5, alpha: Math.random()*0.5+0.5, speed: Math.random()*0.1+0.02, ts: Math.random()*0.015+0.003, td: Math.random()>0.5?1:-1, color: pc(), glow: true });
+    nebulae = [];
+    const nc = ["rgba(61,100,255,","rgba(180,50,255,","rgba(50,180,255,","rgba(255,80,150,"];
+    for (let i = 0; i < 4; i++) nebulae.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*120+80, color: nc[i], alpha: Math.random()*0.06+0.02 });
+  }
+  function pc() { return ["255,255,255","200,220,255","255,220,200","180,200,255","255,255,220"][Math.floor(Math.random()*5)]; }
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    const bg = ctx.createRadialGradient(W*.5,H*.3,0,W*.5,H*.5,Math.max(W,H)*.8);
+    bg.addColorStop(0,"#0D0F22"); bg.addColorStop(0.5,"#08091A"); bg.addColorStop(1,"#04050F");
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+    for (const n of nebulae) { const g = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r); g.addColorStop(0,n.color+(n.alpha*1.5)+")"); g.addColorStop(1,n.color+"0)"); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); }
+    for (const s of stars) {
+      s.alpha += s.ts*s.td; if(s.alpha>0.95||s.alpha<0.1) s.td*=-1;
+      s.y += s.speed*0.1; if(s.y>H){s.y=0;s.x=Math.random()*W;}
+      if(s.glow){const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*6);g.addColorStop(0,`rgba(${s.color},${s.alpha})`);g.addColorStop(0.3,`rgba(${s.color},${s.alpha*0.3})`);g.addColorStop(1,`rgba(${s.color},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.r*6,0,Math.PI*2);ctx.fill();}
+      ctx.fillStyle=`rgba(${s.color},${s.alpha})`; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener("resize",()=>{resize();initStars();});
+  resize(); initStars(); draw();
+})();
+</script>
+</body>
+</html>
