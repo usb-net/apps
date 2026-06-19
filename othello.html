@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オセロ</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --board: #1a6b3c;
+  --board-dark: #155c33;
+  --line: #0d4a28;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --danger: #f85149;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --hint: rgba(255,255,255,0.2);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px;
+  gap: 12px;
+}
+h1 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--accent2);
+  text-transform: uppercase;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+.card h2 {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+input[type="text"] {
+  width: 100%;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: monospace;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 8px;
+}
+input[type="text"]:focus { border-color: var(--accent); }
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+button:active { transform: scale(0.97); }
+button:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary { background: var(--accent2); color: #0d1117; width: 100%; margin-top: 4px; }
+.btn-secondary { background: #21262d; color: var(--text); border: 1px solid #30363d; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-sm { padding: 7px 14px; font-size: 0.82rem; }
+
+#lobby { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 12px; }
+#status-msg { text-align: center; font-size: 0.85rem; color: var(--muted); min-height: 1.2em; }
+
+.room-id-box {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 1.1rem;
+  font-family: monospace;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  user-select: all;
+  word-break: break-all;
+}
+.hint-text { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+
+/* ゲーム */
+#game { display: none; width: 100%; max-width: 480px; flex-direction: column; align-items: center; gap: 12px; }
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 10px 16px;
+}
+.player-info { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 70px; }
+.stone-icon { width: 26px; height: 26px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+.stone-icon.black { background: radial-gradient(circle at 35% 35%, #444, #111); }
+.stone-icon.white { background: radial-gradient(circle at 35% 35%, #fff, #ccc); }
+.player-label { font-size: 0.72rem; color: var(--muted); }
+.player-count { font-size: 1.3rem; font-weight: 700; }
+.active-player .player-count { color: var(--accent2); }
+.turn-indicator { font-size: 0.78rem; color: var(--accent); font-weight: 600; text-align: center; min-width: 80px; }
+
+#board-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--board);
+  border: 3px solid #0d4a28;
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 1px;
+  padding: 1px;
+}
+.cell {
+  background: var(--board);
+  border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.cell:hover { background: var(--board-dark); }
+.cell.no-action { cursor: default; }
+.cell.no-action:hover { background: var(--board); }
+.disc { width: 80%; height: 80%; border-radius: 50%; }
+.disc.black { background: radial-gradient(circle at 35% 30%, #555, #111); box-shadow: 2px 3px 8px rgba(0,0,0,0.6); }
+.disc.white { background: radial-gradient(circle at 35% 30%, #fff, #d0ccc4); box-shadow: 2px 3px 8px rgba(0,0,0,0.4); }
+.hint-dot::after {
+  content: ''; width: 30%; height: 30%; border-radius: 50%;
+  background: var(--hint); display: block;
+}
+#game-msg { font-size: 0.88rem; color: var(--text); text-align: center; font-weight: 600; min-height: 1.2em; }
+.game-actions { display: flex; gap: 8px; }
+
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 100;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid #30363d;
+  border-radius: 12px; padding: 24px 28px;
+  text-align: center; max-width: 300px; width: 90%;
+}
+.modal h2 { font-size: 1.3rem; margin-bottom: 6px; }
+.modal p { color: var(--muted); font-size: 0.88rem; margin-bottom: 18px; white-space: pre-line; }
+.modal-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+#toast {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: #238636; color: #fff;
+  border-radius: 8px; padding: 7px 16px;
+  font-size: 0.82rem; font-weight: 600;
+  transition: transform 0.3s, opacity 0.3s;
+  opacity: 0; pointer-events: none; z-index: 200;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+<h1>Othello</h1>
+
+<!-- ロビー -->
+<div id="lobby">
+  <div id="status-msg">Firebase に接続中...</div>
+
+  <div class="card">
+    <h2>新規ルームを作る（黒・先手）</h2>
+    <button class="btn-primary" id="create-btn" disabled>ルームを作成</button>
+  </div>
+
+  <div class="card">
+    <h2>ルームに参加する（白・後手）</h2>
+    <input type="text" id="room-input" placeholder="ルームIDを入力" maxlength="6" />
+    <button class="btn-primary" id="join-btn" disabled>参加する</button>
+  </div>
+
+  <div class="card" id="room-display-card" style="display:none">
+    <h2>あなたのルームID</h2>
+    <div class="room-id-box" id="room-id-display" title="タップでコピー">------</div>
+    <div class="hint-text">タップでコピー。相手に共有してください。相手が参加するとゲーム開始です。</div>
+  </div>
+</div>
+
+<!-- ゲーム -->
+<div id="game">
+  <div class="scoreboard">
+    <div class="player-info" id="info-black">
+      <div class="stone-icon black"></div>
+      <div class="player-label">黒</div>
+      <div class="player-count" id="count-black">2</div>
+    </div>
+    <div class="turn-indicator" id="turn-msg">--</div>
+    <div class="player-info" id="info-white">
+      <div class="stone-icon white"></div>
+      <div class="player-label">白</div>
+      <div class="player-count" id="count-white">2</div>
+    </div>
+  </div>
+  <div id="board-wrap"></div>
+  <div id="game-msg"></div>
+  <div class="game-actions">
+    <button class="btn-danger btn-sm" id="resign-btn">投了</button>
+  </div>
+</div>
+
+<!-- 終了モーダル -->
+<div class="modal-overlay" id="result-modal">
+  <div class="modal">
+    <h2 id="result-title"></h2>
+    <p id="result-body"></p>
+    <div class="modal-btns">
+      <button class="btn-primary btn-sm" id="rematch-btn">もう一度</button>
+      <button class="btn-secondary btn-sm" onclick="location.reload()">ロビーへ</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">コピーしました</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// ===== Firebase設定 =====
+const firebaseConfig = {
+  apiKey: "AIzaSyDNnsdT2yMXm5-re1QFsVec1cS0bIIJMUQ",
+  authDomain: "usb-net.firebaseapp.com",
+  databaseURL: "https://usb-net-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "usb-net",
+  storageBucket: "usb-net.firebasestorage.app",
+  messagingSenderId: "518456471647",
+  appId: "1:518456471647:web:a54c6e63eb65cb30c1abea"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ===== 定数 =====
+const EMPTY=0, BLACK=1, WHITE=2;
+const DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+// ===== 状態 =====
+let board=[], myColor=null, currentTurn=BLACK;
+let roomId=null, roomRef=null, unsubscribe=null;
+
+// ===== Firebase接続確認 =====
+const connRef = ref(db, '.info/connected');
+onValue(connRef, snap => {
+  if (snap.val()) {
+    setStatus('接続完了');
+    document.getElementById('create-btn').disabled = false;
+    document.getElementById('join-btn').disabled = false;
+  } else {
+    setStatus('接続中...');
+  }
+});
+
+// ===== ルームID生成 =====
+function genRoomId() {
+  return Math.random().toString(36).substring(2,8).toUpperCase();
+}
+
+// ===== 初期ボード =====
+function initBoard() {
+  const b = Array.from({length:8},()=>Array(8).fill(EMPTY));
+  b[3][3]=WHITE; b[4][4]=WHITE;
+  b[3][4]=BLACK; b[4][3]=BLACK;
+  return b;
+}
+
+// ===== ルーム作成（黒） =====
+document.getElementById('create-btn').addEventListener('click', async () => {
+  roomId = genRoomId();
+  roomRef = ref(db, 'othello/' + roomId);
+  myColor = BLACK;
+
+  await set(roomRef, {
+    board: initBoard(),
+    turn: BLACK,
+    status: 'waiting',
+    black: true,
+    white: false,
+    lastMove: null
+  });
+
+  document.getElementById('room-display-card').style.display = 'block';
+  document.getElementById('room-id-display').textContent = roomId;
+  setStatus('相手の参加を待っています...');
+  document.getElementById('create-btn').disabled = true;
+  document.getElementById('join-btn').disabled = true;
+
+  listenRoom();
+});
+
+// ===== ルーム参加（白） =====
+document.getElementById('join-btn').addEventListener('click', async () => {
+  const inputId = document.getElementById('room-input').value.trim().toUpperCase();
+  if (!inputId) return;
+
+  roomRef = ref(db, 'othello/' + inputId);
+  const snap = await get(roomRef);
+  if (!snap.exists()) {
+    setStatus('ルームが見つかりません。IDを確認してください。');
+    return;
+  }
+  const data = snap.val();
+  if (data.status !== 'waiting') {
+    setStatus('このルームはすでに対戦中です。');
+    return;
+  }
+
+  roomId = inputId;
+  myColor = WHITE;
+
+  await update(roomRef, { white: true, status: 'playing' });
+  setStatus('接続しました！ゲーム開始。');
+  listenRoom();
+});
+
+// ===== ルームIDコピー =====
+document.getElementById('room-id-display').addEventListener('click', () => {
+  navigator.clipboard.writeText(roomId).then(() => showToast());
+});
+
+// ===== リアルタイム監視 =====
+function listenRoom() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = onValue(roomRef, snap => {
+    if (!snap.exists()) return;
+    const data = snap.val();
+
+    if (data.status === 'playing' && document.getElementById('lobby').style.display !== 'none') {
+      showGame();
+    }
+    if (data.status === 'playing' || data.status === 'finished') {
+      board = data.board;
+      currentTurn = data.turn;
+      renderBoard();
+      updateUI();
+    }
+    if (data.status === 'resigned') {
+      const loser = data.resignedBy;
+      showResult(
+        (loser===BLACK?'黒':'白') + 'が投了しました',
+        myColor !== loser ? 'あなたの勝ちです！' : 'あなたの負けです。'
+      );
+    }
+    if (data.status === 'finished') {
+      endGame(data.board);
+    }
+    if (data.status === 'rematch') {
+      // リマッチ：ボードリセット
+      board = data.board;
+      currentTurn = data.turn;
+      document.getElementById('result-modal').classList.remove('show');
+      renderBoard();
+      updateUI();
+      update(roomRef, { status: 'playing' });
+    }
+  });
+}
+
+// ===== セル クリック =====
+function onCellClick(e) {
+  if (currentTurn !== myColor) return;
+  const r=parseInt(e.currentTarget.dataset.r), c=parseInt(e.currentTarget.dataset.c);
+  const flips = getFlips(r, c, myColor);
+  if (!flips.length) return;
+
+  const newBoard = board.map(row=>[...row]);
+  newBoard[r][c] = myColor;
+  flips.forEach(([fr,fc]) => newBoard[fr][fc] = myColor);
+
+  const next = myColor===BLACK ? WHITE : BLACK;
+  const nm = getValidMoves(next, newBoard);
+  const cm = getValidMoves(myColor, newBoard);
+
+  if (!nm.length && !cm.length) {
+    update(roomRef, { board: newBoard, turn: next, status: 'finished', lastMove: {r,c} });
+    return;
+  }
+
+  if (!nm.length) {
+    // 相手パス
+    update(roomRef, { board: newBoard, turn: myColor, lastMove: {r,c} });
+    return;
+  }
+
+  update(roomRef, { board: newBoard, turn: next, lastMove: {r,c} });
+}
+
+// ===== ゲームロジック =====
+function getFlips(row, col, color, b=board) {
+  if (b[row][col]!==EMPTY) return [];
+  const opp=color===BLACK?WHITE:BLACK, flips=[];
+  for (const [dr,dc] of DIRS) {
+    let r=row+dr, c=col+dc; const line=[];
+    while(r>=0&&r<8&&c>=0&&c<8&&b[r][c]===opp){line.push([r,c]);r+=dr;c+=dc;}
+    if(line.length&&r>=0&&r<8&&c>=0&&c<8&&b[r][c]===color) flips.push(...line);
+  }
+  return flips;
+}
+function getValidMoves(color, b=board) {
+  const m=[];
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(getFlips(r,c,color,b).length) m.push([r,c]);
+  return m;
+}
+function countStones(b=board) {
+  let bk=0,wh=0;
+  b.flat().forEach(v=>{if(v===BLACK)bk++;else if(v===WHITE)wh++;});
+  return{b:bk,w:wh};
+}
+
+// ===== ボード描画 =====
+function renderBoard() {
+  const wrap = document.getElementById('board-wrap');
+  wrap.innerHTML = '';
+  const hints = getValidMoves(currentTurn);
+  const hs = new Set(hints.map(([r,c])=>r+','+c));
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    const cell = document.createElement('div');
+    cell.className='cell'; cell.dataset.r=r; cell.dataset.c=c;
+    if (board[r][c]===BLACK) {
+      const d=document.createElement('div'); d.className='disc black'; cell.appendChild(d);
+      cell.classList.add('no-action');
+    } else if (board[r][c]===WHITE) {
+      const d=document.createElement('div'); d.className='disc white'; cell.appendChild(d);
+      cell.classList.add('no-action');
+    } else if (hs.has(r+','+c) && currentTurn===myColor) {
+      cell.classList.add('hint-dot');
+      cell.addEventListener('click', onCellClick);
+    } else {
+      cell.classList.add('no-action');
+    }
+    wrap.appendChild(cell);
+  }
+}
+
+// ===== UI =====
+function showGame() {
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('game').style.display='flex';
+}
+function updateUI() {
+  const{b,w}=countStones();
+  document.getElementById('count-black').textContent=b;
+  document.getElementById('count-white').textContent=w;
+  const isMy=currentTurn===myColor;
+  document.getElementById('turn-msg').textContent=isMy?'あなたのターン':(currentTurn===BLACK?'黒':'白')+'のターン';
+  document.getElementById('info-black').classList.toggle('active-player',currentTurn===BLACK);
+  document.getElementById('info-white').classList.toggle('active-player',currentTurn===WHITE);
+  setGameMsg(isMy?'石を置いてください':'相手の手番です...');
+}
+function setStatus(msg){ document.getElementById('status-msg').textContent=msg; }
+function setGameMsg(msg){ document.getElementById('game-msg').textContent=msg; }
+function showToast(){
+  const t=document.getElementById('toast');
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000);
+}
+function showResult(title,body){
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-body').textContent=body;
+  document.getElementById('result-modal').classList.add('show');
+}
+function endGame(b=board){
+  const{bk,wh}=countStones(b);
+  // 既にfinishedイベントで複数回呼ばれないようガード
+  if(document.getElementById('result-modal').classList.contains('show')) return;
+  const bCount=Object.values(b).flat().filter(v=>v===BLACK).length;
+  const wCount=Object.values(b).flat().filter(v=>v===WHITE).length;
+  let title,body;
+  if(bCount>wCount){title='黒の勝ち！';body=`黒 ${bCount} - 白 ${wCount}\n`+(myColor===BLACK?'あなたの勝ちです！🎉':'あなたの負けです。');}
+  else if(wCount>bCount){title='白の勝ち！';body=`黒 ${bCount} - 白 ${wCount}\n`+(myColor===WHITE?'あなたの勝ちです！🎉':'あなたの負けです。');}
+  else{title='引き分け！';body=`黒 ${bCount} - 白 ${wCount}`;}
+  showResult(title,body);
+}
+
+// ===== ボタン =====
+document.getElementById('resign-btn').addEventListener('click',()=>{
+  update(roomRef,{status:'resigned', resignedBy:myColor});
+});
+document.getElementById('rematch-btn').addEventListener('click',()=>{
+  update(roomRef,{
+    board: initBoard(),
+    turn: BLACK,
+    status: 'rematch',
+    lastMove: null
+  });
+  document.getElementById('result-modal').classList.remove('show');
+});
+</script>
+</body>
+</html>
