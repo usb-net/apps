@@ -700,7 +700,9 @@ ${qaText}
     const text = data.content?.find(b => b.type === "text")?.text || "分析結果を取得できませんでした。";
     bodyEl.textContent = text;
 
-    // シェアボタンを追加
+    // 既存のシェアボタンを削除してから追加
+    const existing = document.querySelector(".btn-share");
+    if (existing) existing.remove();
     const shareBtn = document.createElement("button");
     shareBtn.className = "btn-share";
     shareBtn.textContent = "🔗 この結果をシェア";
@@ -713,50 +715,63 @@ ${qaText}
 }
 
 function shareResult(text) {
-  const payload = {
-    result: text,
-    qa: answers.map(a => ({ q: a.q, a: a.a })),
-  };
-  const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
-  const url = `${location.origin}${location.pathname}?result=${encoded}`;
-  navigator.clipboard.writeText(url).then(() => {
-    alert("URLをコピーしました！LINEなどで共有できます。");
-  }).catch(() => {
-    prompt("このURLをコピーしてください：", url);
-  });
+  fetch("https://usb-net.soneski300382.workers.dev", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "save",
+      payload: { result: text, qa: answers.map(a => ({ q: a.q, a: a.a })) }
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.id) {
+      const url = `${location.origin}${location.pathname}?id=${data.id}`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert("URLをコピーしました！LINEなどで共有できます。");
+      }).catch(() => {
+        prompt("このURLをコピーしてください：", url);
+      });
+    }
+  })
+  .catch(() => alert("シェア用URLの生成に失敗しました。"));
 }
 
 function loadSharedResult() {
   const params = new URLSearchParams(location.search);
-  const encoded = params.get("result");
-  if (!encoded) return false;
-  try {
-    const payload = JSON.parse(decodeURIComponent(atob(encoded)));
-    document.getElementById("mainScreen").style.display = "none";
-    document.querySelector(".cat-tabs").style.display = "none";
-    const screen = document.getElementById("analysisScreen");
-    screen.classList.add("visible");
+  const id = params.get("id");
+  if (!id) return false;
 
-    // Q&Aログ
-    const log = document.getElementById("qaLog");
-    log.innerHTML = `<div class="qa-log-title">回答内容</div>` +
-      payload.qa.map((item, i) => `
-        <div class="qa-item">
-          <div class="qa-q">Q${i+1}. ${item.q}</div>
-          <div class="qa-a">${item.a}</div>
-        </div>`).join("");
+  document.getElementById("mainScreen").style.display = "none";
+  document.querySelector(".cat-tabs").style.display = "none";
+  const screen = document.getElementById("analysisScreen");
+  screen.classList.add("visible");
+  document.getElementById("analysisBody").innerHTML = `<div class="analysis-loading">読み込み中...</div>`;
 
-    // 分析結果
-    document.getElementById("analysisBody").textContent = payload.result;
+  fetch(`https://usb-net.soneski300382.workers.dev?id=${id}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById("analysisBody").textContent = "結果が見つかりませんでした。";
+        return;
+      }
+      document.getElementById("analysisBody").textContent = data.result;
+      document.querySelector(".analysis-title").textContent = "✦ 分析結果（シェア）";
+      const log = document.getElementById("qaLog");
+      if (data.qa) {
+        log.innerHTML = `<div class="qa-log-title">回答内容</div>` +
+          data.qa.map((item, i) => `
+            <div class="qa-item">
+              <div class="qa-q">Q${i+1}. ${item.q}</div>
+              <div class="qa-a">${item.a}</div>
+            </div>`).join("");
+      }
+    })
+    .catch(() => {
+      document.getElementById("analysisBody").textContent = "読み込みに失敗しました。";
+    });
 
-    // シェアページ用ラベル
-    const title = document.querySelector(".analysis-title");
-    title.textContent = "✦ 分析結果（シェア）";
-
-    return true;
-  } catch(e) {
-    return false;
-  }
+  return true;
 }
 
 function restartApp() {
