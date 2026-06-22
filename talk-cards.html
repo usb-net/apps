@@ -522,7 +522,7 @@ const cards = {
 };
 
 const catLabels = { daily: "daily", moshi: "moshi", value: "value", serious: "serious" };
-const TOTAL = 10;
+const TOTAL = 5;
 
 let currentCat = "daily";
 let deck = [];
@@ -655,7 +655,7 @@ async function runAnalysis() {
     `Q${i+1}: ${item.q}\nA: ${item.a}`
   ).join("\n\n");
 
-  const prompt = `以下は、ある人物が答えた10個の会話カードの回答です。
+  const prompt = `以下は、ある人物が答えた5個の会話カードの回答です。
 
 ${qaText}
 
