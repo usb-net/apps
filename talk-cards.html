@@ -21,7 +21,8 @@
     --glow-daily:   rgba(61,255,208,0.25);
     --glow-moshi:   rgba(255,110,255,0.25);
     --glow-value:   rgba(110,187,255,0.25);
-    --glow-serious: rgba(255,217,61,0.25);
+    --cat-love:    #FF8FAB;
+    --glow-love:    rgba(255,143,171,0.25);
   }
 
   body {
@@ -78,6 +79,7 @@
   .cat-tab.active[data-cat="moshi"]   { border-color: var(--cat-moshi);   color: var(--cat-moshi);   box-shadow: 0 0 12px var(--glow-moshi),   inset 0 0 12px var(--glow-moshi); }
   .cat-tab.active[data-cat="value"]   { border-color: var(--cat-value);   color: var(--cat-value);   box-shadow: 0 0 12px var(--glow-value),   inset 0 0 12px var(--glow-value); }
   .cat-tab.active[data-cat="serious"] { border-color: var(--cat-serious); color: var(--cat-serious); box-shadow: 0 0 12px var(--glow-serious), inset 0 0 12px var(--glow-serious); }
+  .cat-tab.active[data-cat="love"]    { border-color: var(--cat-love);    color: var(--cat-love);    box-shadow: 0 0 12px var(--glow-love),    inset 0 0 12px var(--glow-love); }
 
   /* カードエリア */
   .card-area {
@@ -102,6 +104,7 @@
   .card[data-cat="moshi"]   { box-shadow: 0 0 40px var(--glow-moshi),   0 0 80px rgba(255,110,255,0.08); }
   .card[data-cat="value"]   { box-shadow: 0 0 40px var(--glow-value),   0 0 80px rgba(110,187,255,0.08); }
   .card[data-cat="serious"] { box-shadow: 0 0 40px var(--glow-serious), 0 0 80px rgba(255,217,61,0.08); }
+  .card[data-cat="love"]    { box-shadow: 0 0 40px var(--glow-love),    0 0 80px rgba(255,143,171,0.08); }
 
   /* ノイズ */
   .card-noise {
@@ -118,6 +121,7 @@
   [data-cat="moshi"]::before   { background: linear-gradient(90deg, transparent, var(--cat-moshi), transparent); }
   [data-cat="value"]::before   { background: linear-gradient(90deg, transparent, var(--cat-value), transparent); }
   [data-cat="serious"]::before { background: linear-gradient(90deg, transparent, var(--cat-serious), transparent); }
+  [data-cat="love"]::before    { background: linear-gradient(90deg, transparent, var(--cat-love), transparent); }
 
   /* カード内コンテンツ */
   .card-content {
@@ -133,6 +137,7 @@
   [data-cat="moshi"]   .card-cat-label { color: var(--cat-moshi);   text-shadow: 0 0 10px var(--cat-moshi); }
   [data-cat="value"]   .card-cat-label { color: var(--cat-value);   text-shadow: 0 0 10px var(--cat-value); }
   [data-cat="serious"] .card-cat-label { color: var(--cat-serious); text-shadow: 0 0 10px var(--cat-serious); }
+  [data-cat="love"]    .card-cat-label { color: var(--cat-love);    text-shadow: 0 0 10px var(--cat-love); }
 
   .card-question {
     font-family: 'Zen Kaku Gothic New', sans-serif;
@@ -204,7 +209,8 @@
   .btn-next[data-cat="daily"]   { background: var(--cat-daily);   border-color: var(--cat-daily); }
   .btn-next[data-cat="moshi"]   { background: var(--cat-moshi);   border-color: var(--cat-moshi); }
   .btn-next[data-cat="value"]   { background: var(--cat-value);   border-color: var(--cat-value); }
-  .btn-next[data-cat="serious"] { background: var(--cat-serious); border-color: var(--cat-serious); }
+  .btn-next[data-cat="serious"] { background: var(--cat-serious); border-color: var(--cat-serious); color: #07080F; }
+  .btn-next[data-cat="love"]    { background: var(--cat-love);    border-color: var(--cat-love);    color: #07080F; }
   .btn-next:hover:not(:disabled) { opacity: 0.85; }
 
   /* 空カード */
@@ -331,6 +337,7 @@
     <button class="cat-tab" data-cat="moshi">もしも</button>
     <button class="cat-tab" data-cat="value">価値観</button>
     <button class="cat-tab" data-cat="serious">シリアス</button>
+    <button class="cat-tab" data-cat="love">恋愛</button>
   </div>
 
   <div class="card-area">
@@ -518,10 +525,40 @@ const cards = {
     { q: "自分のことを一番わかっているのは誰だと思う？", hint: "自分自身？誰か他の人？" },
     { q: "「弱い自分」を見せられる相手がいる？", hint: "どんなときに見せる？" },
     { q: "10年後の自分に期待していること、不安なことは？", hint: "正直に言うと" },
+    { q: "なにをしている時に充実していると感じる？", hint: "仕事・趣味・人との時間…" },
+    { q: "今までで一番感動した出来事は？", hint: "涙が出た・鳥肌が立った…" },
+    { q: "人生のターニングポイントはいつ？", hint: "あのとき自分が変わった、という瞬間" },
+    { q: "過去の失敗や挫折から得た経験はある？", hint: "今の自分にどう活きてる？" },
+    { q: "自分にとって完璧な休日とはどんな一日？", hint: "何もしない・どこかへ行く・誰かと…" },
+  ],
+  love: [
+    { q: "一目惚れを信じる？", hint: "経験があれば教えて" },
+    { q: "恋愛対象に惹かれるポイントは？", hint: "見た目・性格・雰囲気…" },
+    { q: "逆に、一気に気持ちが冷めるポイントは？", hint: "これだけはNG、というもの" },
+    { q: "好きな人の前でしてしまった、一番恥ずかしいことは？", hint: "笑えるやつ教えて" },
+    { q: "デートに誘われるとしたら、どこへ連れて行ってほしい？", hint: "理想の場所・雰囲気" },
+    { q: "恋人に求める条件を3つ挙げるとしたら？", hint: "優先順位も教えて" },
+    { q: "恋愛における一番の不安や恐れは？", hint: "話せる範囲で" },
+    { q: "デートは楽しめるタイプ？それとも緊張するタイプ？", hint: "どんな場面で出やすい？" },
+    { q: "好きな漫画や映画のカップルは？その理由は？", hint: "憧れるふたりの関係性" },
+    { q: "恋人と行きたいお気に入りの場所はある？", hint: "実在の場所でも架空でも" },
+    { q: "好きな人には普段どんなふうにアプローチする？", hint: "積極的・自然な流れ・待つ…" },
+    { q: "シングルでいることの一番良いところは？", hint: "正直なところ" },
+    { q: "自分はロマンチストだと思う？", hint: "具体的なエピソードがあれば" },
+    { q: "恋愛を長続きさせるために一番難しいと思うことは？", hint: "経験や考えを聞かせて" },
+    { q: "恋をして誰かを失うのと、一度も恋をしないのとではどちらを選ぶ？", hint: "理由も聞かせて" },
+    { q: "ケンカをしたら、自分から仲直りをする？それとも相手から来るのを待つ？", hint: "いつもそうなる？" },
+    { q: "誰かにしてもらった中で、一番ロマンチックだったことは？", hint: "照れずに教えて" },
+    { q: "ふたりで一緒にやってみたいことをひとつ挙げるとしたら？", hint: "どんなことでもOK" },
+    { q: "密かに強く魅力を感じるものは？恋愛や見た目以外で", hint: "意外な答えを聞いてみよう" },
+    { q: "もしふたりで無人島に取り残されたら、何を持って行く？", hint: "3つまで選んで" },
+    { q: "相談にはアドバイスがほしい？ただ聞いてほしい？", hint: "相手によって違う？" },
+    { q: "恋人とケンカをした時は、どのように仲直りする？", hint: "いつものパターンは？" },
+    { q: "明日結婚式を挙げるとして、どんなテーマにしたい？", hint: "場所・雰囲気・こだわり" },
   ],
 };
 
-const catLabels = { daily: "daily", moshi: "moshi", value: "value", serious: "serious" };
+const catLabels = { daily: "daily", moshi: "moshi", value: "価値観", serious: "serious", love: "恋愛" };
 const TOTAL = 5;
 
 let currentCat = "daily";
@@ -613,12 +650,11 @@ function nextCard() {
 }
 
 function shuffleCards() {
-  deck = shuffle(cards[currentCat]);
-  index = 0;
-  answers = [];
-  restoreCard();
-  setCardContent();
-  updateCounter();
+  // 回答済み分はそのまま、残りだけシャッフル
+  const answered = deck.slice(0, index + 1);
+  const remaining = shuffle(deck.slice(index + 1));
+  deck = [...answered, ...remaining];
+  // カード表示は現在のまま更新しない
 }
 
 function updateCounter() {
