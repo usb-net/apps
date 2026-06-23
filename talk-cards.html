@@ -731,11 +731,11 @@ function nextCard() {
 }
 
 function shuffleCards() {
-  // 回答済み分はそのまま、現在と残りだけシャッフル
   const answered = deck.slice(0, index);
   const remaining = shuffle(deck.slice(index));
   deck = [...answered, ...remaining];
-  // カード表示は現在のまま更新しない
+  restoreCard();
+  setCardContent();
 }
 
 function updateCounter() {
