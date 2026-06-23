@@ -732,12 +732,16 @@ function nextCard() {
 }
 
 function shuffleCards() {
+  const answered = deck.slice(0, index);
   const current = deck[index];
-  let candidates = deck.filter(card => card !== current);
-  candidates = shuffle(candidates);
-  deck = [...deck.slice(0, index), current, ...candidates];
-  index++;
-  if (index >= deck.length) index = 0;
+  let remaining = shuffle(deck.slice(index));
+
+  // シャッフル後も先頭が同じカードなら隣と入れ替え
+  if (remaining.length > 1 && remaining[0] === current) {
+    [remaining[0], remaining[1]] = [remaining[1], remaining[0]];
+  }
+
+  deck = [...answered, ...remaining];
   restoreCard();
   setCardContent();
 }
