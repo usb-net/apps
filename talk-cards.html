@@ -23,6 +23,10 @@
     --glow-value:   rgba(110,187,255,0.25);
     --cat-love:    #FF8FAB;
     --glow-love:    rgba(255,143,171,0.25);
+    --cat-game:    #A8FF78;
+    --glow-game:    rgba(168,255,120,0.25);
+    --cat-wild:    #FFB347;
+    --glow-wild:    rgba(255,179,71,0.25);
   }
 
   body {
@@ -80,6 +84,8 @@
   .cat-tab.active[data-cat="value"]   { border-color: var(--cat-value);   color: var(--cat-value);   box-shadow: 0 0 12px var(--glow-value),   inset 0 0 12px var(--glow-value); }
   .cat-tab.active[data-cat="serious"] { border-color: var(--cat-serious); color: var(--cat-serious); box-shadow: 0 0 12px var(--glow-serious), inset 0 0 12px var(--glow-serious); }
   .cat-tab.active[data-cat="love"]    { border-color: var(--cat-love);    color: var(--cat-love);    box-shadow: 0 0 12px var(--glow-love),    inset 0 0 12px var(--glow-love); }
+  .cat-tab.active[data-cat="game"]    { border-color: var(--cat-game);    color: var(--cat-game);    box-shadow: 0 0 12px var(--glow-game),    inset 0 0 12px var(--glow-game); }
+  .cat-tab.active[data-cat="wild"]    { border-color: var(--cat-wild);    color: var(--cat-wild);    box-shadow: 0 0 12px var(--glow-wild),    inset 0 0 12px var(--glow-wild); }
 
   /* カードエリア */
   .card-area {
@@ -105,6 +111,8 @@
   .card[data-cat="value"]   { box-shadow: 0 0 40px var(--glow-value),   0 0 80px rgba(110,187,255,0.08); }
   .card[data-cat="serious"] { box-shadow: 0 0 40px var(--glow-serious), 0 0 80px rgba(255,217,61,0.08); }
   .card[data-cat="love"]    { box-shadow: 0 0 40px var(--glow-love),    0 0 80px rgba(255,143,171,0.08); }
+  .card[data-cat="game"]    { box-shadow: 0 0 40px var(--glow-game),    0 0 80px rgba(168,255,120,0.08); }
+  .card[data-cat="wild"]    { box-shadow: 0 0 40px var(--glow-wild),    0 0 80px rgba(255,179,71,0.08); }
 
   /* ノイズ */
   .card-noise {
@@ -122,6 +130,8 @@
   [data-cat="value"]::before   { background: linear-gradient(90deg, transparent, var(--cat-value), transparent); }
   [data-cat="serious"]::before { background: linear-gradient(90deg, transparent, var(--cat-serious), transparent); }
   [data-cat="love"]::before    { background: linear-gradient(90deg, transparent, var(--cat-love), transparent); }
+  [data-cat="game"]::before    { background: linear-gradient(90deg, transparent, var(--cat-game), transparent); }
+  [data-cat="wild"]::before    { background: linear-gradient(90deg, transparent, var(--cat-wild), transparent); }
 
   /* カード内コンテンツ */
   .card-content {
@@ -138,6 +148,8 @@
   [data-cat="value"]   .card-cat-label { color: var(--cat-value);   text-shadow: 0 0 10px var(--cat-value); }
   [data-cat="serious"] .card-cat-label { color: var(--cat-serious); text-shadow: 0 0 10px var(--cat-serious); }
   [data-cat="love"]    .card-cat-label { color: var(--cat-love);    text-shadow: 0 0 10px var(--cat-love); }
+  [data-cat="game"]    .card-cat-label { color: var(--cat-game);    text-shadow: 0 0 10px var(--cat-game); }
+  [data-cat="wild"]    .card-cat-label { color: var(--cat-wild);    text-shadow: 0 0 10px var(--cat-wild); }
 
   .card-question {
     font-family: 'Zen Kaku Gothic New', sans-serif;
@@ -211,6 +223,8 @@
   .btn-next[data-cat="value"]   { background: var(--cat-value);   border-color: var(--cat-value); }
   .btn-next[data-cat="serious"] { background: var(--cat-serious); border-color: var(--cat-serious); color: #07080F; }
   .btn-next[data-cat="love"]    { background: var(--cat-love);    border-color: var(--cat-love);    color: #07080F; }
+  .btn-next[data-cat="game"]    { background: var(--cat-game);    border-color: var(--cat-game);    color: #07080F; }
+  .btn-next[data-cat="wild"]    { background: var(--cat-wild);    border-color: var(--cat-wild);    color: #07080F; }
   .btn-next:hover:not(:disabled) { opacity: 0.85; }
 
   /* 空カード */
@@ -338,6 +352,8 @@
     <button class="cat-tab" data-cat="value">価値観</button>
     <button class="cat-tab" data-cat="serious">シリアス</button>
     <button class="cat-tab" data-cat="love">恋愛</button>
+    <button class="cat-tab" data-cat="game">ゲーム</button>
+    <button class="cat-tab" data-cat="wild">変化球</button>
   </div>
 
   <div class="card-area">
@@ -425,6 +441,12 @@ const cards = {
     { q: "幽霊はいると思う？", hint: "体験談があれば" },
     { q: "どうでもいい特技ある？", hint: "役に立たないやつほどいい" },
     { q: "最近やらかした小さな失敗は？", hint: "笑い話になってるやつ" },
+    { q: "最近「意外とこれ好きかも」と思ったものは？", hint: "食べ物・趣味・習慣など" },
+    { q: "子どもの頃嫌いだったのに今好きなものは？", hint: "食べ物・場所・人…" },
+    { q: "スマホから消えたら一番困るアプリは？", hint: "なくなったら困る度ランキング" },
+    { q: "つい無駄遣いしちゃうものは？", hint: "ついポチってしまうやつ" },
+    { q: "一番長く使ってる持ち物は？", hint: "何年もの？愛着のわけは？" },
+    { q: "家の中で一番好きな場所は？", hint: "いつもそこにいる？" },
   ],
   moshi: [
     { q: "もし1週間、仕事も義務もなく自由に使えるとしたら？", hint: "何をする？どこへ行く？" },
@@ -476,6 +498,20 @@ const cards = {
     { q: "今日が人生最後の日なら何する？", hint: "正直に" },
     { q: "何でも一つ願いが叶うなら？", hint: "「もっと願いを」はなしで" },
     { q: "自分の人生を映画にするならタイトルは？", hint: "ジャンルは何になる？" },
+    { q: "自分の能力値を1つだけ上げられるなら何を上げる？", hint: "知力・体力・コミュ力…" },
+    { q: "人生をセーブ＆ロードできるなら使う？", hint: "どの場面でロードする？" },
+    { q: "他人の考えが読める能力と、自分の考えを完全に隠せる能力ならどっち？", hint: "使い道も考えてみて" },
+    { q: "1年間だけ別人として生活できるなら誰になる？", hint: "有名人でも架空でも" },
+    { q: "自分専用AIを作れるなら何を任せる？", hint: "どんな機能がほしい？" },
+    { q: "24時間だけ何をしても許される日があったら？", hint: "正直に" },
+    { q: "人生を1つだけやり直せるならいつに戻る？", hint: "何をやり直す？" },
+    { q: "明日から有名人になるのと大金持ちになるのどっち？", hint: "理由も聞かせて" },
+    { q: "自分の寿命が分かるボタンがあったら押す？", hint: "知りたい？知りたくない？" },
+    { q: "世界中の知識を得る代わりに趣味を失うなら受ける？", hint: "どの趣味を失うかによる？" },
+    { q: "過去を見る能力と未来を見る能力ならどっち？", hint: "どんな場面で使う？" },
+    { q: "自分のコピーが1人作れるなら何を任せる？", hint: "自分専用AIとどう違う？" },
+    { q: "他人の人生を1日だけ体験できるなら誰？", hint: "有名人でも身近な人でも" },
+    { q: "一つだけ常識を変えられるなら何を変える？", hint: "社会・学校・職場…" },
   ],
   value: [
     { q: "お金と時間、どっちが大事だと思う？", hint: "状況によって変わる？" },
@@ -513,6 +549,24 @@ const cards = {
     { q: "将来一番やりたいことは？", hint: "仕事でも私生活でも" },
     { q: "どんな人と一緒にいると落ち着く？", hint: "共通点・雰囲気・距離感" },
     { q: "人生で一番大切な思い出は？", hint: "話せる範囲で" },
+    { q: "人に理解されたいと思う？", hint: "どのくらい？誰に？" },
+    { q: "「普通」って大事だと思う？", hint: "普通でいることは楽？苦しい？" },
+    { q: "嫌いな人と仲良くする必要はあると思う？", hint: "自分はできる？" },
+    { q: "好きなことを仕事にするのは幸せだと思う？", hint: "経験や考えを聞かせて" },
+    { q: "人生において運はどのくらい重要だと思う？", hint: "努力との比率は？" },
+    { q: "自分らしさって何だと思う？", hint: "言葉にするのが難しいやつ" },
+    { q: "AIが人間と同じ知能になったら友達になれる？", hint: "どんな条件なら？" },
+    { q: "記憶を消せるなら消したい経験はある？", hint: "話せる範囲で" },
+    { q: "自分を一言で説明するとしたら何者？", hint: "肩書きじゃなくていい" },
+    { q: "自分の人生で伏線回収された出来事はある？", hint: "あのことがここに繋がった、みたいな" },
+    { q: "自分の欠点を1つだけ残すなら何を残す？", hint: "なぜそれを残す？" },
+    { q: "人から誤解されやすいところは？", hint: "実際はそうじゃないのに、というやつ" },
+    { q: "自分の性格で一番得している部分は？", hint: "これがあってよかった、というもの" },
+    { q: "自分の性格で一番損している部分は？", hint: "これさえなければ…というもの" },
+    { q: "他人に期待する方？しない方？", hint: "どんな場面で出やすい？" },
+    { q: "頑固だと思う？", hint: "自分では？他人から言われる？" },
+    { q: "自分は変わりやすい人？変わらない人？", hint: "考え方・好み・行動" },
+    { q: "人生で一番影響を受けた作品は？", hint: "本・映画・ゲーム・漫画なんでも" },
   ],
   serious: [
     { q: "いつから「大人」になったと感じた？", hint: "きっかけはなんだった？" },
@@ -530,12 +584,17 @@ const cards = {
     { q: "人生のターニングポイントはいつ？", hint: "あのとき自分が変わった、という瞬間" },
     { q: "過去の失敗や挫折から得た経験はある？", hint: "今の自分にどう活きてる？" },
     { q: "自分にとって完璧な休日とはどんな一日？", hint: "何もしない・どこかへ行く・誰かと…" },
+    { q: "いまの自分に一番足りないものは？", hint: "時間・お金・勇気・経験…" },
+    { q: "何歳の自分が一番好き？", hint: "理由も聞かせて" },
+    { q: "人生で一番勇気を出した瞬間は？", hint: "小さなことでもOK" },
+    { q: "自分が大切にされていると感じるのはどんな時？", hint: "具体的な場面があれば" },
+    { q: "今の生活で失いたくないものは？", hint: "もの・人・習慣…" },
+    { q: "もし誰にも評価されなくても続けたいことは？", hint: "本当に好きなもの" },
   ],
   love: [
     { q: "一目惚れを信じる？", hint: "経験があれば教えて" },
     { q: "恋愛対象に惹かれるポイントは？", hint: "見た目・性格・雰囲気…" },
     { q: "逆に、一気に気持ちが冷めるポイントは？", hint: "これだけはNG、というもの" },
-    { q: "好きな人の前でしてしまった、一番恥ずかしいことは？", hint: "笑えるやつ教えて" },
     { q: "デートに誘われるとしたら、どこへ連れて行ってほしい？", hint: "理想の場所・雰囲気" },
     { q: "恋人に求める条件を3つ挙げるとしたら？", hint: "優先順位も教えて" },
     { q: "恋愛における一番の不安や恐れは？", hint: "話せる範囲で" },
@@ -555,10 +614,32 @@ const cards = {
     { q: "相談にはアドバイスがほしい？ただ聞いてほしい？", hint: "相手によって違う？" },
     { q: "恋人とケンカをした時は、どのように仲直りする？", hint: "いつものパターンは？" },
     { q: "明日結婚式を挙げるとして、どんなテーマにしたい？", hint: "場所・雰囲気・こだわり" },
+    { q: "一緒にいて沈黙が苦じゃない人は大事？", hint: "そういう人がいる？" },
+    { q: "恋愛と友情の境界線ってどこだと思う？", hint: "自分の中での定義は？" },
+    { q: "好きな人に合わせるタイプ？合わせてもらうタイプ？", hint: "相手によって違う？" },
+    { q: "恋人とは毎日連絡したい？", hint: "理想の距離感は？" },
+    { q: "恋愛において自由と安心、どちらが大事？", hint: "両方は難しい？" },
+    { q: "「この人とならこの先も楽しそう」と思うポイントは？", hint: "どんな瞬間にそう感じる？" },
+  ],
+  game: [
+    { q: "初めて徹夜したゲームは？", hint: "あの夜を振り返って" },
+    { q: "一番長く遊んだゲームは？", hint: "時間数・年数どちらでも" },
+    { q: "自分がNPCだったら何をしてそう？", hint: "どんな役割のNPCになる？" },
+    { q: "ゲームで一番苦手な要素は？", hint: "高所・時間制限・謎解き…" },
+    { q: "現実に実装してほしいゲームシステムは？", hint: "セーブ&ロード・瞬間移動・アイテムボックス…" },
+    { q: "おすすめしたいゲームはある？", hint: "ジャンル・機種問わず" },
+    { q: "ゲームの世界で住むならどこ？", hint: "どのゲームのどのエリア？" },
+    { q: "一生一つのゲームしか遊べないなら何を選ぶ？", hint: "遊び尽くせる自信がある？" },
+  ],
+  wild: [
+    { q: "誰にも理解されなくても好きなものは？", hint: "マニアックでも恥ずかしくてもOK" },
+    { q: "自分を動物以外で例えるなら？", hint: "食べ物・道具・天気・乗り物…" },
+    { q: "自分の取扱説明書の最初の一文は？", hint: "「このモデルは〜」" },
+    { q: "他人には勧めないけど自分は好きなものは？", hint: "人を選ぶやつ" },
   ],
 };
 
-const catLabels = { daily: "daily", moshi: "moshi", value: "価値観", serious: "serious", love: "恋愛" };
+const catLabels = { daily: "daily", moshi: "もしも", value: "価値観", serious: "serious", love: "恋愛", game: "ゲーム", wild: "変化球" };
 const TOTAL = 5;
 
 let currentCat = "daily";
@@ -650,9 +731,9 @@ function nextCard() {
 }
 
 function shuffleCards() {
-  // 回答済み分はそのまま、残りだけシャッフル
-  const answered = deck.slice(0, index + 1);
-  const remaining = shuffle(deck.slice(index + 1));
+  // 回答済み分はそのまま、現在と残りだけシャッフル
+  const answered = deck.slice(0, index);
+  const remaining = shuffle(deck.slice(index));
   deck = [...answered, ...remaining];
   // カード表示は現在のまま更新しない
 }
