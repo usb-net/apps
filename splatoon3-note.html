@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スプラトゥーン3 練習ノート｜52ガロンデコ編</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16151c;
+    --panel:#211f2b;
+    --panel2:#2a2837;
+    --ink-yellow:#efe32b;
+    --ink-pink:#e5518d;
+    --ink-cyan:#3fd8d4;
+    --text:#eceaf2;
+    --sub:#a9a5bb;
+    --line:#3a3749;
+    --danger:#ff7a6b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'M PLUS Rounded 1c','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif;
+    line-height:1.75;
+    padding:24px 16px 64px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{margin-bottom:28px;}
+  .kicker{
+    display:inline-block;
+    background:var(--ink-yellow);
+    color:#1c1a10;
+    font-weight:800;
+    font-size:12px;
+    padding:3px 12px;
+    border-radius:999px;
+    transform:rotate(-2deg);
+    letter-spacing:.08em;
+  }
+  h1{
+    font-size:clamp(24px,5vw,34px);
+    font-weight:800;
+    margin-top:10px;
+    line-height:1.3;
+  }
+  h1 .weapon{color:var(--ink-pink);}
+  .goalbox{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:16px;
+    padding:14px 18px;
+    margin-top:16px;
+    font-size:14px;
+  }
+  .goalbox b{color:var(--ink-cyan);}
+
+  section{margin-top:36px;}
+  h2{
+    font-size:19px;
+    font-weight:800;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  h2 .num{
+    flex-shrink:0;
+    width:30px;height:30px;
+    border-radius:9px;
+    background:var(--ink-pink);
+    color:#fff;
+    font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+    transform:rotate(-4deg);
+  }
+  h2 .num.c{background:var(--ink-cyan);color:#0d2b2a;}
+  h2 .num.y{background:var(--ink-yellow);color:#1c1a10;}
+  h3{
+    font-size:15px;font-weight:700;
+    color:var(--ink-yellow);
+    margin:18px 0 6px;
+  }
+  p{font-size:14.5px;margin-bottom:8px;}
+  .note{color:var(--sub);font-size:13px;}
+
+  .card{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:16px;
+    padding:16px 18px;
+    margin-bottom:14px;
+  }
+
+  /* チェックリスト */
+  ul.check{list-style:none;}
+  ul.check li{margin:4px 0;}
+  ul.check label{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:8px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:14.5px;
+    transition:background .15s;
+  }
+  ul.check label:hover{background:var(--panel2);}
+  ul.check input{
+    appearance:none;
+    flex-shrink:0;
+    width:20px;height:20px;
+    margin-top:3px;
+    border:2px solid var(--sub);
+    border-radius:6px;
+    background:transparent;
+    cursor:pointer;
+    position:relative;
+  }
+  ul.check input:checked{
+    background:var(--ink-cyan);
+    border-color:var(--ink-cyan);
+  }
+  ul.check input:checked::after{
+    content:"✓";
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    color:#0d2b2a;font-weight:800;font-size:14px;
+  }
+  ul.check input:checked + span{
+    color:var(--sub);
+    text-decoration:line-through;
+    text-decoration-color:var(--ink-cyan);
+  }
+  ul.check input:focus-visible{outline:2px solid var(--ink-yellow);outline-offset:2px;}
+
+  /* テーマ選択（ラジオ） */
+  ul.pick{list-style:none;}
+  ul.pick label{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:8px 10px;border-radius:10px;cursor:pointer;font-size:14.5px;
+  }
+  ul.pick label:hover{background:var(--panel2);}
+  ul.pick input{
+    appearance:none;flex-shrink:0;
+    width:20px;height:20px;margin-top:3px;
+    border:2px solid var(--sub);border-radius:50%;
+    cursor:pointer;position:relative;
+  }
+  ul.pick input:checked{border-color:var(--ink-pink);}
+  ul.pick input:checked::after{
+    content:"";position:absolute;inset:3px;
+    border-radius:50%;background:var(--ink-pink);
+  }
+  ul.pick input:checked + span{color:var(--ink-pink);font-weight:700;}
+  ul.pick input:focus-visible{outline:2px solid var(--ink-yellow);outline-offset:2px;}
+
+  /* 通常リスト */
+  ul.plain{list-style:none;}
+  ul.plain li{
+    font-size:14.5px;
+    padding-left:1.2em;position:relative;margin:4px 0;
+  }
+  ul.plain li::before{
+    content:"●";position:absolute;left:0;top:0;
+    font-size:9px;line-height:2.9;color:var(--ink-cyan);
+  }
+  ul.plain.ng li::before{content:"✕";font-size:12px;line-height:2.1;color:var(--danger);}
+  ol.steps{padding-left:1.4em;font-size:14.5px;}
+  ol.steps li{margin:4px 0;}
+  ol.steps li::marker{color:var(--ink-yellow);font-weight:800;}
+
+  /* 3つの確認 */
+  .three{
+    display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;
+  }
+  .three div{
+    flex:1;min-width:150px;
+    background:var(--panel2);
+    border-radius:12px;
+    padding:12px;
+    text-align:center;
+    font-weight:700;font-size:15px;
+    border-bottom:3px solid var(--ink-cyan);
+  }
+
+  /* 週間プラン */
+  .week{display:flex;flex-direction:column;gap:8px;}
+  .week label{
+    display:flex;gap:12px;align-items:center;
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:12px;
+    padding:10px 14px;
+    cursor:pointer;font-size:14.5px;
+  }
+  .week .day{
+    flex-shrink:0;
+    background:var(--ink-yellow);color:#1c1a10;
+    font-weight:800;font-size:12px;
+    border-radius:8px;padding:2px 8px;
+    min-width:64px;text-align:center;
+  }
+  .week input{
+    appearance:none;flex-shrink:0;
+    width:20px;height:20px;
+    border:2px solid var(--sub);border-radius:6px;
+    cursor:pointer;position:relative;margin-left:auto;
+  }
+  .week input:checked{background:var(--ink-cyan);border-color:var(--ink-cyan);}
+  .week input:checked::after{
+    content:"✓";position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    color:#0d2b2a;font-weight:800;font-size:14px;
+  }
+  .week label:has(input:checked){border-color:var(--ink-cyan);}
+
+  /* 振り返り入力フォーム */
+  .logform{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px;}
+  .logform .row{display:flex;flex-direction:column;gap:4px;}
+  .logform .row.two{flex-direction:row;gap:10px;}
+  .logform .row.two > div{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .logform label{font-size:13px;font-weight:700;color:var(--ink-yellow);}
+  .logform input,.logform textarea{
+    font-family:inherit;font-size:14px;
+    background:var(--panel2);
+    color:var(--text);
+    border:2px solid var(--line);
+    border-radius:10px;
+    padding:8px 10px;
+    resize:vertical;
+  }
+  .logform input:focus,.logform textarea:focus{
+    outline:none;border-color:var(--ink-cyan);
+  }
+  .form-actions{display:flex;align-items:center;gap:12px;margin-top:4px;}
+  button.btn-save{
+    font-family:inherit;
+    background:var(--ink-pink);color:#fff;
+    border:none;border-radius:999px;
+    padding:9px 24px;
+    font-size:14px;font-weight:800;
+    cursor:pointer;
+  }
+  button.btn-save:hover{filter:brightness(1.1);}
+  .form-msg{font-size:13px;color:var(--ink-cyan);font-weight:700;}
+
+  /* 記録一覧 */
+  .history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  button.btn-export{
+    font-family:inherit;
+    background:transparent;
+    border:2px solid var(--ink-cyan);
+    color:var(--ink-cyan);
+    border-radius:999px;
+    padding:5px 16px;
+    font-size:12px;font-weight:700;
+    cursor:pointer;margin-top:24px;
+  }
+  button.btn-export:hover{background:var(--ink-cyan);color:#0d2b2a;}
+  .log-entry{
+    background:var(--panel2);
+    border:2px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+    margin:10px 0;
+    font-size:14px;
+  }
+  .log-entry .entry-head{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:6px;
+  }
+  .log-entry .entry-date{
+    font-weight:800;color:var(--ink-yellow);font-size:14px;
+  }
+  .log-entry .entry-weapon{
+    font-size:12px;color:var(--sub);
+    background:var(--panel);border-radius:8px;padding:1px 8px;
+  }
+  .log-entry .entry-del{
+    margin-left:auto;
+    font-family:inherit;
+    background:transparent;border:none;
+    color:var(--sub);font-size:12px;cursor:pointer;
+    padding:2px 6px;border-radius:6px;
+  }
+  .log-entry .entry-del:hover{color:var(--danger);}
+  .log-entry dl{display:grid;grid-template-columns:9em 1fr;gap:3px 10px;}
+  .log-entry dt{color:var(--ink-cyan);font-weight:700;font-size:13px;}
+  .log-entry dd{color:var(--text);font-size:13.5px;white-space:pre-wrap;}
+  @media (max-width:480px){
+    .log-entry dl{grid-template-columns:1fr;}
+    .log-entry dd{margin-bottom:4px;color:var(--sub);}
+  }
+
+  .reset-area{margin-top:40px;text-align:center;}
+  button.reset{
+    font-family:inherit;
+    background:transparent;
+    border:2px solid var(--sub);
+    color:var(--sub);
+    border-radius:999px;
+    padding:8px 22px;
+    font-size:13px;font-weight:700;
+    cursor:pointer;
+  }
+  button.reset:hover{border-color:var(--danger);color:var(--danger);}
+  .save-note{font-size:12px;color:var(--sub);margin-top:8px;}
+
+  footer{
+    margin-top:32px;font-size:12px;color:var(--sub);
+    text-align:center;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">SPLATOON 3 TRAINING NOTE</span>
+  <h1>練習ノート<br><span class="weapon">.52ガロンデコ</span>編</h1>
+  <div class="goalbox">
+    <b>現在の目標：</b>試合中に慌てず、状況を見て行動する。ナワバリバトルで基本的な立ち回りを身につける。将来的にチャージャー（スクイックリン）を扱うための土台を作る。
+  </div>
+</header>
+
+<!-- 1 -->
+<section>
+  <h2><span class="num y">1</span>毎日の練習メニュー</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">試し撃ち（5〜10分）</h3>
+    <ul class="check" data-group="daily">
+      <li><label><input type="checkbox" id="d1"><span>止まった状態で、狙った的に初弾を当てる</span></label></li>
+      <li><label><input type="checkbox" id="d2"><span>横移動しながら撃つ</span></label></li>
+      <li><label><input type="checkbox" id="d3"><span>イカ移動から姿を出し、狙って撃つ</span></label></li>
+      <li><label><input type="checkbox" id="d4"><span>2発当てたらすぐ潜る動作を繰り返す</span></label></li>
+      <li><label><input type="checkbox" id="d5"><span>インクが少なくなる前に潜って回復する</span></label></li>
+    </ul>
+    <p class="note">目的：連射で無理に当て続けるのではなく、「狙う→撃つ→潜る」の区切りを作る。</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">ナワバリ（3〜5試合）── 今日のテーマを1つだけ選ぶ</h3>
+    <ul class="pick">
+      <li><label><input type="radio" name="theme" id="t1"><span>前に出る前に1秒だけ周囲を見る</span></label></li>
+      <li><label><input type="radio" name="theme" id="t2"><span>敵が2人見えたら無理に撃ち合わない</span></label></li>
+      <li><label><input type="radio" name="theme" id="t3"><span>味方の真横ではなく、少し横から援護する</span></label></li>
+      <li><label><input type="radio" name="theme" id="t4"><span>インクが少ない状態で戦わない</span></label></li>
+      <li><label><input type="radio" name="theme" id="t5"><span>倒された直後にすぐ前線へ突っ込まない</span></label></li>
+      <li><label><input type="radio" name="theme" id="t6"><span>残り30秒は生存と塗りを優先する</span></label></li>
+    </ul>
+    <p class="note">一度に全部を意識しない。毎試合1テーマだけ。</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section>
+  <h2><span class="num">2</span>52ガロンデコの立ち回り</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">基本方針</h3>
+    <p>52ガロン系は一発の威力が高い一方で、連射や弾の安定性だけに頼って戦うブキではない。長く撃ち続けるよりも、<b style="color:var(--ink-cyan);">「先に見つける」「先に当てる」「危険なら引く」</b>という判断を練習する。</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">撃ち合いの手順</h3>
+    <ol class="steps">
+      <li>敵を見つけても、すぐ撃たず周囲を一度確認する</li>
+      <li>味方が近くにいるかを見る</li>
+      <li>自分が先に撃てる位置へ移動する</li>
+      <li>短く撃つ</li>
+      <li>倒せなければ、潜るか遮蔽物へ戻る</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">避けたい行動</h3>
+    <ul class="plain ng">
+      <li>敵インクの上で正面から撃ち続ける</li>
+      <li>遠い敵に長時間撃ち続ける</li>
+      <li>敵を追いかけすぎる</li>
+      <li>味方が倒された直後に一人で前へ出る</li>
+      <li>インク残量を見ずに撃ち続ける</li>
+      <li>同じ場所から何度も顔を出す</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">ナワバリでの役割</h3>
+    <p>塗りだけを続けるのではなく、味方が塗りやすいように敵を近づけさせないことも役割。</p>
+    <ul class="plain">
+      <li><b>序盤：</b>自陣を少し塗りながらスペシャルをため、中央へ向かう。自陣を一人で全部塗り切ろうとしない。</li>
+      <li><b>中盤：</b>中央付近で、味方が戦っている相手を横から狙う。敵陣深くまで一人で入りすぎない。</li>
+      <li><b>終盤：</b>残り30秒では、無理なキルより生存を優先。倒されると塗り返されるため、安全な場所を確保してから塗る。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3 -->
+<section>
+  <h2><span class="num c">3</span>落ち着いて行動するための確認</h2>
+  <div class="card">
+    <p>戦う前に、心の中で次の3点を確認する。最初は「逃げ道はある？」だけでもよい。</p>
+    <div class="three">
+      <div>味方はいる？</div>
+      <div>敵は何人？</div>
+      <div>逃げ道はある？</div>
+    </div>
+    <h3>焦ったときの固定ルール</h3>
+    <ul class="plain">
+      <li>画面が混乱したら、一度潜る</li>
+      <li>敵が2人以上なら下がる</li>
+      <li>インクが半分以下なら回復する</li>
+      <li>味方が全員倒されていたら前へ出ない</li>
+      <li>敵を見失ったら追わず、塗り直す</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 -->
+<section>
+  <h2><span class="num">4</span>視野を広げる練習</h2>
+  <div class="card">
+    <h3 style="margin-top:0;">味方を見る</h3>
+    <p>敵だけでなく、画面上の味方の位置を確認する。味方が撃っている方向には敵がいる可能性が高い。</p>
+    <h3>マップを見るタイミング</h3>
+    <ul class="plain">
+      <li>倒された直後</li>
+      <li>復帰して移動する前</li>
+      <li>敵が見えない時間が続いたとき</li>
+      <li>自陣が大きく塗られていると感じたとき</li>
+    </ul>
+    <p class="note">長く見る必要はない。最初は1秒程度で閉じる。</p>
+    <h3>観察だけの試合</h3>
+    <p>1試合だけキル数を目標にせず、「味方がどこにいるか」を確認しながら動く。</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section>
+  <h2><span class="num y">5</span>試合後の振り返り</h2>
+  <div class="card">
+    <p>毎試合すべて反省しない。次の項目から<b style="color:var(--ink-pink);">1つだけ</b>記録する。</p>
+
+    <div class="logform">
+      <div class="row two">
+        <div>
+          <label for="f-date">日付</label>
+          <input type="date" id="f-date">
+        </div>
+        <div>
+          <label for="f-weapon">使用ブキ</label>
+          <input type="text" id="f-weapon" value="52ガロンデコ">
+        </div>
+      </div>
+      <div class="row">
+        <label for="f-theme">今日のテーマ</label>
+        <input type="text" id="f-theme" placeholder="例：敵が2人見えたら無理に撃ち合わない">
+      </div>
+      <div class="row">
+        <label for="f-good">できたこと</label>
+        <textarea id="f-good" rows="2"></textarea>
+      </div>
+      <div class="row">
+        <label for="f-panic">慌てた場面</label>
+        <textarea id="f-panic" rows="2"></textarea>
+      </div>
+      <div class="row">
+        <label for="f-cause">その原因</label>
+        <textarea id="f-cause" rows="2"></textarea>
+      </div>
+      <div class="row">
+        <label for="f-next">次の1試合で直すこと</label>
+        <textarea id="f-next" rows="2"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-save" id="logSaveBtn">この記録を保存</button>
+        <span class="form-msg" id="logMsg"></span>
+      </div>
+    </div>
+
+    <div class="history-head">
+      <h3 style="margin-top:24px;">記録一覧</h3>
+      <button type="button" class="btn-export" id="logExportBtn">テキスト書き出し</button>
+    </div>
+    <div id="logHistory"></div>
+    <p class="note" id="logEmpty">まだ記録はありません。</p>
+
+    <h3>原因の例</h3>
+    <ul class="plain">
+      <li>敵が2人いることに気づかなかった</li>
+      <li>味方が倒されているのに前へ出た</li>
+      <li>インク不足で逃げられなかった</li>
+      <li>敵を追いすぎた</li>
+      <li>マップを見ていなかった</li>
+      <li>同じ場所から撃ち続けた</li>
+    </ul>
+    <p class="note">「エイムが悪かった」だけで終わらせず、その前の位置や判断も確認する。</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section>
+  <h2><span class="num c">6</span>チャージャー移行のための準備</h2>
+  <div class="card">
+    <h3 style="margin-top:0;">52ガロンデコで身につけたい要素</h3>
+    <ul class="plain">
+      <li>敵より先に相手を見つける</li>
+      <li>撃つ前に安全な位置を選ぶ</li>
+      <li>味方が戦っている相手を援護する</li>
+      <li>敵を倒せなくても無理に追わない</li>
+      <li>撃った後に位置を変える</li>
+      <li>マップと味方の位置を見る</li>
+    </ul>
+    <p class="note">これらはスクイックリンを使うときにも役立つ。</p>
+    <h3>チャージャー練習（毎日5分・試し撃ち）</h3>
+    <ul class="check" data-group="charger">
+      <li><label><input type="checkbox" id="c1"><span>フルチャージして止まった的を撃つ</span></label></li>
+      <li><label><input type="checkbox" id="c2"><span>照準を合わせてからチャージする</span></label></li>
+      <li><label><input type="checkbox" id="c3"><span>イカ移動から出てチャージする</span></label></li>
+      <li><label><input type="checkbox" id="c4"><span>一発撃ったら場所を少し変える</span></label></li>
+      <li><label><input type="checkbox" id="c5"><span>当てることより、撃つ前に狙いを決める</span></label></li>
+    </ul>
+    <p class="note">ナワバリで使う場合は、キル数ではなく「無理な場所で構えなかったか」を確認する。</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section>
+  <h2><span class="num">7</span>一週間の進め方</h2>
+  <div class="week">
+    <label><span class="day">1〜2日目</span><span>敵が2人いたら引く</span><input type="checkbox" id="w1"></label>
+    <label><span class="day">3〜4日目</span><span>味方の位置を見てから前へ出る</span><input type="checkbox" id="w2"></label>
+    <label><span class="day">5日目</span><span>マップを1試合に3回以上見る</span><input type="checkbox" id="w3"></label>
+    <label><span class="day">6日目</span><span>残り30秒で倒されないことを優先する</span><input type="checkbox" id="w4"></label>
+    <label><span class="day">7日目</span><span>一週間で最も苦手だった項目を1つだけ再練習する</span><input type="checkbox" id="w5"></label>
+  </div>
+</section>
+
+<!-- 8 -->
+<section>
+  <h2><span class="num y">8</span>最低限覚えること</h2>
+  <div class="card">
+    <ul class="plain">
+      <li>毎試合のテーマは1つだけ</li>
+      <li>敵を見た瞬間に撃たない</li>
+      <li>危険なら一度潜る</li>
+      <li>人数不利では前へ出ない</li>
+      <li>残り30秒は生存を優先する</li>
+      <li>試合後の反省も1つだけ</li>
+    </ul>
+  </div>
+</section>
+
+<div class="reset-area">
+  <button class="reset" id="resetBtn">今日のチェックをリセット</button>
+  <p class="save-note" id="saveNote">チェック状態はこのブラウザに自動保存されます。</p>
+</div>
+
+<footer>このノートは、実際の試合内容に合わせて追記・修正する。</footer>
+
+</div>
+
+<script>
+(function(){
+  var KEY = "splatoon3_note_52deco";
+  var inputs = document.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+  var canStore = false;
+
+  try{
+    localStorage.setItem("__test__","1");
+    localStorage.removeItem("__test__");
+    canStore = true;
+  }catch(e){
+    var note = document.getElementById("saveNote");
+    if(note){ note.textContent = "※この環境では保存できません（ページを閉じるとリセットされます）。ローカルに保存したファイルを開くと自動保存が有効になります。"; }
+  }
+
+  function save(){
+    if(!canStore) return;
+    var state = {};
+    inputs.forEach(function(el){ if(el.id) state[el.id] = el.checked; });
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function load(){
+    if(!canStore) return;
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return;
+      var state = JSON.parse(raw);
+      inputs.forEach(function(el){
+        if(el.id && state.hasOwnProperty(el.id)) el.checked = !!state[el.id];
+      });
+    }catch(e){}
+  }
+
+  inputs.forEach(function(el){ el.addEventListener("change", save); });
+
+  var btn = document.getElementById("resetBtn");
+  if(btn){
+    btn.addEventListener("click", function(){
+      inputs.forEach(function(el){ el.checked = false; });
+      save();
+    });
+  }
+
+  load();
+
+  /* ---------- 振り返り記録 ---------- */
+  var LOG_KEY = "splatoon3_note_52deco_logs";
+  var fields = ["date","weapon","theme","good","panic","cause","next"];
+  var labels = {date:"日付",weapon:"使用ブキ",theme:"今日のテーマ",good:"できたこと",panic:"慌てた場面",cause:"その原因",next:"次の1試合で直すこと"};
+  var historyEl = document.getElementById("logHistory");
+  var emptyEl = document.getElementById("logEmpty");
+  var msgEl = document.getElementById("logMsg");
+  var msgTimer = null;
+
+  var dateInput = document.getElementById("f-date");
+  if(dateInput && !dateInput.value){
+    var now = new Date();
+    dateInput.value = now.getFullYear() + "-" +
+      String(now.getMonth()+1).padStart(2,"0") + "-" +
+      String(now.getDate()).padStart(2,"0");
+  }
+
+  function getLogs(){
+    if(!canStore) return window.__logs || [];
+    try{
+      var raw = localStorage.getItem(LOG_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+
+  function setLogs(logs){
+    if(canStore){
+      try{ localStorage.setItem(LOG_KEY, JSON.stringify(logs)); }catch(e){}
+    }else{
+      window.__logs = logs;
+    }
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function renderLogs(){
+    var logs = getLogs();
+    historyEl.innerHTML = "";
+    emptyEl.style.display = logs.length ? "none" : "";
+    logs.slice().sort(function(a,b){
+      return (b.date||"").localeCompare(a.date||"") || (b.ts||0)-(a.ts||0);
+    }).forEach(function(log){
+      var div = document.createElement("div");
+      div.className = "log-entry";
+      var body = "";
+      ["theme","good","panic","cause","next"].forEach(function(k){
+        if(log[k]){ body += "<dt>" + labels[k] + "</dt><dd>" + esc(log[k]) + "</dd>"; }
+      });
+      div.innerHTML =
+        '<div class="entry-head">' +
+          '<span class="entry-date">' + esc(log.date||"日付なし") + '</span>' +
+          '<span class="entry-weapon">' + esc(log.weapon||"") + '</span>' +
+          '<button type="button" class="entry-del" data-ts="' + log.ts + '">削除</button>' +
+        '</div>' +
+        (body ? "<dl>" + body + "</dl>" : '<p class="note">（内容なし）</p>');
+      historyEl.appendChild(div);
+    });
+  }
+
+  function showMsg(text){
+    msgEl.textContent = text;
+    if(msgTimer) clearTimeout(msgTimer);
+    msgTimer = setTimeout(function(){ msgEl.textContent = ""; }, 2500);
+  }
+
+  document.getElementById("logSaveBtn").addEventListener("click", function(){
+    var log = {ts: Date.now()};
+    var hasContent = false;
+    fields.forEach(function(k){
+      var el = document.getElementById("f-" + k);
+      log[k] = el ? el.value.trim() : "";
+      if(k !== "date" && k !== "weapon" && log[k]) hasContent = true;
+    });
+    if(!hasContent){
+      showMsg("内容が空です");
+      return;
+    }
+    var logs = getLogs();
+    logs.push(log);
+    setLogs(logs);
+    ["theme","good","panic","cause","next"].forEach(function(k){
+      var el = document.getElementById("f-" + k);
+      if(el) el.value = "";
+    });
+    renderLogs();
+    showMsg(canStore ? "保存しました" : "保存しました（この環境ではページを閉じると消えます）");
+  });
+
+  historyEl.addEventListener("click", function(ev){
+    var btn = ev.target.closest(".entry-del");
+    if(!btn) return;
+    if(!confirm("この記録を削除しますか？")) return;
+    var ts = Number(btn.getAttribute("data-ts"));
+    setLogs(getLogs().filter(function(l){ return l.ts !== ts; }));
+    renderLogs();
+  });
+
+  document.getElementById("logExportBtn").addEventListener("click", function(){
+    var logs = getLogs();
+    if(!logs.length){ alert("書き出す記録がありません。"); return; }
+    var lines = ["スプラトゥーン3 振り返り記録（52ガロンデコ）", ""];
+    logs.slice().sort(function(a,b){
+      return (a.date||"").localeCompare(b.date||"") || (a.ts||0)-(b.ts||0);
+    }).forEach(function(log){
+      lines.push("----------------------------------------");
+      fields.forEach(function(k){
+        if(log[k]) lines.push(labels[k] + "：" + log[k]);
+      });
+      lines.push("");
+    });
+    var blob = new Blob([lines.join("\n")], {type:"text/plain;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "splatoon3_振り返り記録.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  });
+
+  renderLogs();
+})();
+</script>
+</body>
+</html>
