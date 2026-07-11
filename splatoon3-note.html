@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>スプラトゥーン3 練習ノート｜52ガロンデコ編</title>
+<title>スプラトゥーン3 練習ノート</title>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -93,6 +93,35 @@
     padding:16px 18px;
     margin-bottom:14px;
   }
+
+  /* ブキ別メモ（折りたたみ） */
+  details.wpn{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:16px;
+    margin-bottom:12px;
+  }
+  details.wpn summary{
+    cursor:pointer;
+    padding:14px 18px;
+    font-weight:800;
+    font-size:16px;
+    color:var(--ink-yellow);
+    list-style:none;
+    display:flex;align-items:center;gap:10px;
+  }
+  details.wpn summary::-webkit-details-marker{display:none;}
+  details.wpn summary::before{
+    content:"▶";font-size:11px;color:var(--sub);
+    transition:transform .15s;
+  }
+  details.wpn[open] summary::before{transform:rotate(90deg);}
+  details.wpn summary .tag{
+    margin-left:auto;
+    font-size:11px;font-weight:700;color:var(--sub);
+  }
+  .wpn-body{padding:0 18px 16px;}
+  .wpn-body .card{background:var(--panel2);}
 
   /* チェックリスト */
   ul.check{list-style:none;}
@@ -321,7 +350,7 @@
 
 <header>
   <span class="kicker">SPLATOON 3 TRAINING NOTE</span>
-  <h1>練習ノート<br><span class="weapon">.52ガロンデコ</span>編</h1>
+  <h1>スプラトゥーン3<br>練習ノート</h1>
   <div class="goalbox">
     <b>現在の目標：</b>試合中に慌てず、状況を見て行動する。ナワバリバトルで基本的な立ち回りを身につける。将来的にチャージャー（スクイックリン）を扱うための土台を作る。
   </div>
@@ -335,9 +364,9 @@
     <h3 style="margin-top:0;">試し撃ち（5〜10分）</h3>
     <ul class="check" data-group="daily">
       <li><label><input type="checkbox" id="d1"><span>止まった状態で、狙った的に初弾を当てる</span></label></li>
-      <li><label><input type="checkbox" id="d2"><span>横移動しながら撃つ</span></label></li>
+      <li><label><input type="checkbox" id="d2"><span>イカ潜り（インク回復）→ジャンプ撃ちで的を狙う→着地したらすぐ潜る</span></label></li>
       <li><label><input type="checkbox" id="d3"><span>イカ移動から姿を出し、狙って撃つ</span></label></li>
-      <li><label><input type="checkbox" id="d4"><span>2発当てたらすぐ潜る動作を繰り返す</span></label></li>
+      <li><label><input type="checkbox" id="d4"><span>数発当てたらすぐ潜る動作を繰り返す</span></label></li>
       <li><label><input type="checkbox" id="d5"><span>インクが少なくなる前に潜って回復する</span></label></li>
     </ul>
     <p class="note">目的：連射で無理に当て続けるのではなく、「狙う→撃つ→潜る」の区切りを作る。</p>
@@ -359,7 +388,12 @@
 
 <!-- 2 -->
 <section>
-  <h2><span class="num">2</span>52ガロンデコの立ち回り</h2>
+  <h2><span class="num">2</span>ブキ別メモ</h2>
+  <p class="note" style="margin-bottom:12px;">共通練習が主軸。ブキを持ち替えたら該当メモだけ開いて確認する。</p>
+
+  <details class="wpn" open>
+    <summary>.52ガロンデコ<span class="tag">牽制キル型</span></summary>
+    <div class="wpn-body">
 
   <div class="card">
     <h3 style="margin-top:0;">基本方針</h3>
@@ -398,6 +432,82 @@
       <li><b>終盤：</b>残り30秒では、無理なキルより生存を優先。倒されると塗り返されるため、安全な場所を確保してから塗る。</li>
     </ul>
   </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">ジャンプ撃ちの注意</h3>
+    <p>52ガロン系はジャンプ中の弾ブレが大きい系統。ジャンプ撃ちを主軸にするなら、アクション強化ギアでブレを補正する。「潜ってインク回復→ジャンプ撃ち→着地して潜る」のサイクル自体は生存力に繋がるので維持してよいが、撃ち続けるほどブレる仕様のため、2〜4発で区切る意識は地上撃ちと共通。</p>
+  </div>
+
+    </div>
+  </details>
+
+  <details class="wpn">
+    <summary>プロモデラーRG<span class="tag">塗り・スペシャル型</span></summary>
+    <div class="wpn-body">
+
+  <div class="card">
+    <h3 style="margin-top:0;">基本方針</h3>
+    <p>サブはスプリンクラー、スペシャルはナイスダマ。メイン・サブとも対面性能は低く、撃ち合いで勝つブキではない。仕事は<b style="color:var(--ink-cyan);">「塗り続けること」「ナイスダマを高回転で投げること」「敵の注目を集めること」</b>の3つ。キル数を評価軸にしない。</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">立ち回りの手順</h3>
+    <ol class="steps">
+      <li>スプリンクラーを投げてから動く（2方面を同時に塗る）</li>
+      <li>スプリンクラーは勢いが落ちたら別の場所へ張り替える</li>
+      <li>ナイスダマが溜まったら温存せず、敵の高台や居座られて嫌な場所へ</li>
+      <li>前線の少し後ろで塗り続け、敵が来たら撃ち合わず引く</li>
+      <li>倒されると塗りも圧も止まるので、生存を最優先する</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">避けたい行動</h3>
+    <ul class="plain ng">
+      <li>正面からの撃ち合いを自分から挑む</li>
+      <li>ナイスダマが無い状態で敵に近づく</li>
+      <li>自陣後方に引きこもって塗りだけする（前線の塗りが仕事）</li>
+      <li>スプリンクラーを投げ忘れたまま動く</li>
+      <li>ナイスダマを溜めたまま抱え落ちする</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">練習ノートとの接続</h3>
+    <p>52ガロンデコで練習してきた「敵を見ても撃たない」「危険なら引く」の判断は、このブキではそのまま生命線になる。テーマ選びは「敵が2人見えたら無理に撃ち合わない」「インクが少ない状態で戦わない」あたりが特に相性がいい。</p>
+  </div>
+
+    </div>
+  </details>
+
+  <details class="wpn">
+    <summary>チャージャー準備<span class="tag">スクイックリン</span></summary>
+    <div class="wpn-body">
+
+  <div class="card">
+    <h3 style="margin-top:0;">52ガロンデコで身につけたい要素</h3>
+    <ul class="plain">
+      <li>敵より先に相手を見つける</li>
+      <li>撃つ前に安全な位置を選ぶ</li>
+      <li>味方が戦っている相手を援護する</li>
+      <li>敵を倒せなくても無理に追わない</li>
+      <li>撃った後に位置を変える</li>
+      <li>マップと味方の位置を見る</li>
+    </ul>
+    <p class="note">これらはスクイックリンを使うときにも役立つ。</p>
+    <h3>チャージャー練習（毎日5分・試し撃ち）</h3>
+    <ul class="check" data-group="charger">
+      <li><label><input type="checkbox" id="c1"><span>フルチャージして止まった的を撃つ</span></label></li>
+      <li><label><input type="checkbox" id="c2"><span>照準を合わせてからチャージする</span></label></li>
+      <li><label><input type="checkbox" id="c3"><span>イカ移動から出てチャージする</span></label></li>
+      <li><label><input type="checkbox" id="c4"><span>一発撃ったら場所を少し変える</span></label></li>
+      <li><label><input type="checkbox" id="c5"><span>当てることより、撃つ前に狙いを決める</span></label></li>
+    </ul>
+    <p class="note">ナワバリで使う場合は、キル数ではなく「無理な場所で構えなかったか」を確認する。</p>
+  </div>
+
+    </div>
+  </details>
 </section>
 
 <!-- 3 -->
@@ -454,7 +564,7 @@
         </div>
         <div>
           <label for="f-weapon">使用ブキ</label>
-          <input type="text" id="f-weapon" value="52ガロンデコ">
+          <input type="text" id="f-weapon" placeholder="例：52ガロンデコ／プロモデラーRG">
         </div>
       </div>
       <div class="row">
@@ -503,35 +613,9 @@
   </div>
 </section>
 
-<!-- 6 -->
-<section>
-  <h2><span class="num c">6</span>チャージャー移行のための準備</h2>
-  <div class="card">
-    <h3 style="margin-top:0;">52ガロンデコで身につけたい要素</h3>
-    <ul class="plain">
-      <li>敵より先に相手を見つける</li>
-      <li>撃つ前に安全な位置を選ぶ</li>
-      <li>味方が戦っている相手を援護する</li>
-      <li>敵を倒せなくても無理に追わない</li>
-      <li>撃った後に位置を変える</li>
-      <li>マップと味方の位置を見る</li>
-    </ul>
-    <p class="note">これらはスクイックリンを使うときにも役立つ。</p>
-    <h3>チャージャー練習（毎日5分・試し撃ち）</h3>
-    <ul class="check" data-group="charger">
-      <li><label><input type="checkbox" id="c1"><span>フルチャージして止まった的を撃つ</span></label></li>
-      <li><label><input type="checkbox" id="c2"><span>照準を合わせてからチャージする</span></label></li>
-      <li><label><input type="checkbox" id="c3"><span>イカ移動から出てチャージする</span></label></li>
-      <li><label><input type="checkbox" id="c4"><span>一発撃ったら場所を少し変える</span></label></li>
-      <li><label><input type="checkbox" id="c5"><span>当てることより、撃つ前に狙いを決める</span></label></li>
-    </ul>
-    <p class="note">ナワバリで使う場合は、キル数ではなく「無理な場所で構えなかったか」を確認する。</p>
-  </div>
-</section>
-
 <!-- 7 -->
 <section>
-  <h2><span class="num">7</span>一週間の進め方</h2>
+  <h2><span class="num">6</span>一週間の進め方</h2>
   <div class="week">
     <label><span class="day">1〜2日目</span><span>敵が2人いたら引く</span><input type="checkbox" id="w1"></label>
     <label><span class="day">3〜4日目</span><span>味方の位置を見てから前へ出る</span><input type="checkbox" id="w2"></label>
@@ -543,7 +627,7 @@
 
 <!-- 8 -->
 <section>
-  <h2><span class="num y">8</span>最低限覚えること</h2>
+  <h2><span class="num y">7</span>最低限覚えること</h2>
   <div class="card">
     <ul class="plain">
       <li>毎試合のテーマは1つだけ</li>
@@ -715,7 +799,7 @@
   document.getElementById("logExportBtn").addEventListener("click", function(){
     var logs = getLogs();
     if(!logs.length){ alert("書き出す記録がありません。"); return; }
-    var lines = ["スプラトゥーン3 振り返り記録（52ガロンデコ）", ""];
+    var lines = ["スプラトゥーン3 振り返り記録", ""];
     logs.slice().sort(function(a,b){
       return (a.date||"").localeCompare(b.date||"") || (a.ts||0)-(b.ts||0);
     }).forEach(function(log){
