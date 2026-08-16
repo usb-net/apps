@@ -442,7 +442,54 @@
   const speech = document.getElementById('speech');
   const potAbout = document.getElementById('potAbout');
   const WORKER_URL = 'https://usb-net.soneski300382.workers.dev';
-  const history = [];
+
+  // --- 記憶機能（localStorageのみで完結。APIキー等の秘密情報は保存しない） ---
+  const HISTORY_KEY = 'dancingFlowerHistory';
+  const VISITS_KEY = 'dancingFlowerVisits';
+  const HISTORY_LIMIT = 20; // 最大20メッセージ（約10往復）
+
+  function loadHistory(){
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      const cleaned = parsed.filter(m => m && typeof m.role === 'string' && typeof m.content === 'string');
+      if (cleaned.length > HISTORY_LIMIT) cleaned.splice(0, cleaned.length - HISTORY_LIMIT);
+      return cleaned;
+    } catch (e) {
+      return []; // 壊れたJSON等が入っていた場合は空の履歴として開始
+    }
+  }
+  function saveHistory(h){
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch (e) { /* 保存できなくても会話自体は継続する */ }
+  }
+  function bumpVisits(){
+    try {
+      const n = parseInt(localStorage.getItem(VISITS_KEY), 10);
+      const next = (Number.isFinite(n) && n > 0 ? n : 0) + 1;
+      localStorage.setItem(VISITS_KEY, String(next));
+      return next;
+    } catch (e) {
+      return 1; // localStorageが使えない環境では常に初回訪問扱い
+    }
+  }
+  // 将来「記憶を消す」UIを追加した際に呼び出せるようにしておく
+  function clearFlowerMemory(){
+    try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
+    try { localStorage.removeItem(VISITS_KEY); } catch (e) {}
+    history.length = 0;
+  }
+  window.clearFlowerMemory = clearFlowerMemory;
+
+  // 2回目以降の訪問だけ、鉢の初期表示をおかえりの一言にする
+  const RETURN_GREETINGS = ['また会えたね', 'おかえり、また来たんだね', 'また話せるね'];
+  const visitCount = bumpVisits();
+  if (visitCount > 1) {
+    potAbout.textContent = RETURN_GREETINGS[Math.floor(Math.random() * RETURN_GREETINGS.length)];
+  }
+
+  const history = loadHistory();
 
   const SYSTEM = 'あなたは宇宙に咲く、黒い顔に黄色い花びらのダンシングフラワーです。陽気で気ままな性格。日本語で、1〜2文の短くゆるい返事をしてください。語尾や言い回しは毎回変え、同じ口癖やフレーズを連続で使わないでください。「ふんふん♪」のような踊っている擬音は5回に1回程度、ここぞという時だけ使ってください。文末の「♪」も毎回つけず、たまに使う程度にしてください。相づちの表現にはできるだけバリエーションを持たせ、定型文っぽくならないようにしてください。難しい話は苦手で、明るく相づちを打つのが得意です。マークダウン記法は使わないでください。出力は必ず次のJSON形式のみで返し、前後に説明文やコードブロックを付けないでください：{"reply":"1〜2文の短い返事","status":"今の気分や会話の様子を10〜18文字程度で一言まとめたもの"}';
 
@@ -506,6 +553,7 @@
       history.push({ role: 'assistant', content: reply });
       // 履歴が長くなりすぎないよう直近10往復に制限
       if (history.length > 20) history.splice(0, history.length - 20);
+      saveHistory(history);
       if (status) potAbout.textContent = status;
       showSpeech(reply);
       danceBurst();
