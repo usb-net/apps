@@ -340,15 +340,22 @@
   .eye.left  { left: 24%; }
   .eye.right { right: 24%; }
 
+  /* 花・茎・葉は同じ.flower内の兄弟要素なので、sway/emotionMotion/petMotionの
+     揺れはこれまで通り.flower単位でまとめて動く（茎だけ別に揺れることはない）。
+     ここでは接合部の見え方だけを調整する：
+     ・茎の上端を.head（花の裏側）へ深めに潜り込ませ、透き間が見えないようにする
+       （.headの下端＝flower-sizeの80%地点に対し、上端がそれより十分上に来る高さにする）
+     ・茎の下端も鉢側へ深めに潜り込ませ、鉢との継ぎ目が浮いて見えないようにする
+     ・z-index:-1のため.head（z-index未指定=前面）より必ず後ろに描画される */
   .stem {
     position: absolute;
-    bottom: -2%;
+    bottom: -5%;
     left: 50%;
     transform: translateX(-50%);
-    width: 6%;
-    height: 22%;
+    width: 4%;
+    height: 33%;
     background: #3a7d2c;
-    border-radius: 6px;
+    border-radius: 5px;
     z-index: -1;
   }
   /* 葉の輪郭はSVG（SVG/nature028.svg）の実データを使用する。
@@ -367,7 +374,9 @@
        （leafSwayL/leafPetUpLの両方がこの変数を参照する） */
     --leaf-rest: 28deg;
     bottom: 11%;
-    left: 48%;
+    /* 茎（幅4%、中心50%＝48%〜52%）の内側へ回転支点が少しかかるように、
+       茎の左端(48%)よりさらに1%内側(49%)を根本にする */
+    left: 49%;
     margin-left: -20%;
     transform-origin: right bottom;
     animation: leafSwayL 2.4s ease-in-out infinite;
@@ -375,7 +384,8 @@
   .leaf.r {
     --leaf-rest: -28deg;
     bottom: 8%;
-    left: 52%;
+    /* 茎の右端(52%)より1%内側(51%)を根本にする */
+    left: 51%;
     transform-origin: left bottom;
     animation: leafSwayR 2.4s ease-in-out infinite;
   }
@@ -414,8 +424,9 @@
     z-index: 1;
     margin-top: -14px;
     width: min(90vw, 360px);
-    height: clamp(140px, 40vw, 166px);
-    min-height: 140px;
+    /* 「できること」案内の分だけ縦に必要なため、以前よりわずかに高さを確保する */
+    height: clamp(150px, 40vw, 176px);
+    min-height: 150px;
   }
   /* 鉢本体のシルエットはSVG（SVG/planter.svg）を使用する。
      clip-path/polygonのカクカクした直線輪郭をやめ、リム＋滑らかに膨らむ側面＋
@@ -444,9 +455,9 @@
     flex-direction: column;
     align-items: stretch;
     /* 鉢の中央ではなく上寄せにして、入力欄を鉢の上端に近づける
-       （入力欄→ステータス→プロフィールの順序はそのまま維持） */
+       （入力欄→ステータス→できることの案内、の順序はそのまま維持） */
     justify-content: flex-start;
-    gap: 4px;
+    gap: 3px;
   }
   .pot-about {
     font-size: 10px;
@@ -455,20 +466,34 @@
     text-align: center;
     opacity: 0.9;
   }
-  .pot-profile {
-    font-size: 9.5px;
-    line-height: 1.4;
+  /* 「プロフィール」の代わりに、できることの簡単な案内を表示する */
+  .pot-guide {
     color: #fdf1e2;
-    text-align: center;
-    opacity: 0.7;
+    opacity: 0.75;
     border-top: 1px solid rgba(255,255,255,0.14);
-    padding-top: 4px;
+    padding-top: 2px;
+    min-height: 0;
+    overflow: hidden;
   }
-  .pot-profile-title {
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    opacity: 0.55;
+  .pot-guide-title {
+    font-size: 8.5px;
+    line-height: 1.15;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+    text-align: center;
     margin-bottom: 1px;
+  }
+  .pot-guide-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .pot-guide-list li {
+    font-size: 8px;
+    line-height: 1.2;
   }
 
   /* 花の近くに浮かぶ吹き出し。
@@ -705,10 +730,15 @@
           <button id="chatSend">送信</button>
         </div>
         <div class="pot-about" id="potAbout">はなしかけてみてね</div>
-        <div class="pot-profile">
-          <div class="pot-profile-title">プロフィール</div>
-          <div>種族：ダンシングフラワー</div>
-          <div>出身：宇宙　｜　性格：陽気で気まま</div>
+        <div class="pot-guide">
+          <div class="pot-guide-title">こんなことができるよ</div>
+          <ul class="pot-guide-list">
+            <li>💬 話しかけるとおしゃべりする</li>
+            <li>🌤️ 今日や明日の天気を聞ける</li>
+            <li>🔮 「今日の運勢」で花びら占い</li>
+            <li>💕 花を触るとよろこぶ</li>
+            <li>🏷️ 好きな名前をつけられる</li>
+          </ul>
         </div>
       </div>
     </div>
