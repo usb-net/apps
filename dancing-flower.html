@@ -11,7 +11,7 @@
     --eye: #fff5cc;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html, body { min-height: 100%; }
   body {
     background:
       radial-gradient(ellipse at 30% 20%, #2a1a4a 0%, transparent 55%),
@@ -23,8 +23,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    /* 収まらない時は上端基準に自動フォールバック（対応ブラウザのみ。非対応環境は従来通りcenterのまま） */
+    justify-content: safe center;
     min-height: 100vh;
-    overflow: hidden;
+    /* ソフトウェアキーボード表示時など、実際に見えている高さに追従させる（非対応環境は100vhのまま） */
+    min-height: 100dvh;
+    overflow-x: hidden;
+    /* はみ出した分を隠さず、必要ならページを下方向へスクロールできるようにする */
+    overflow-y: auto;
     user-select: none;
   }
   /* 星空 */
@@ -39,18 +45,24 @@
   .stage {
     position: relative;
     z-index: 1;
-    width: min(70vw, 340px);
-    height: min(70vw, 340px);
+    /* 花自体のサイズ（従来通り）と、吹き出し用に常に確保しておく上部の余白。
+       余白はビューポートが低いほど小さくなるが、吹き出し側のmax-heightと
+       常に同じ基準値を使うため、どんな高さでも吹き出しの上端が
+       この予約領域からはみ出すことはない。 */
+    --flower-size: min(70vw, 340px);
+    --speech-reserve: min(18vh, 110px);
+    width: var(--flower-size);
+    height: calc(var(--flower-size) + var(--speech-reserve));
     display: flex;
     align-items: flex-end;
     justify-content: center;
   }
 
-  /* 揺れる本体（花全体） */
+  /* 揺れる本体（花全体）：.stageの下端に固定表示し、上に生まれた分が吹き出しの予約領域になる */
   .flower {
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: var(--flower-size);
+    height: var(--flower-size);
     transform-origin: 50% 100%;
     animation: sway 2.4s ease-in-out infinite;
     will-change: transform;
@@ -378,7 +390,8 @@
   .speech {
     position: absolute;
     left: 50%;
-    bottom: 100%;
+    /* .stageの上端(100%)ではなく、花自体の上端（予約領域の直上）を基準にする */
+    bottom: var(--flower-size);
     margin-bottom: 10px;
     transform: translateX(-50%) translateY(6px) scale(0.94);
     width: max-content;
@@ -402,6 +415,10 @@
     border: 1px solid rgba(0,0,0,0.12);
     border-radius: 16px;
     overflow-wrap: break-word;
+    /* 文章量が増えても.stageの予約領域からはみ出さないよう上限を設け、
+       それでも長い場合は吹き出し内でスクロールできるようにする */
+    max-height: calc(var(--speech-reserve) - 20px);
+    overflow-y: auto;
   }
   .speech.show::after {
     content: '';
