@@ -552,14 +552,13 @@
     border: 7px solid transparent;
     border-top-color: #fffaf2;
   }
-  /* チャットUIの外枠＝鉢の上フチそのもの、という単一のフチに見せる。
-     以前はplanter.svg側にもrectでリムを描いていたため二重フチに見えて
-     いたので、SVG側のリムは削除し、このCSS側の.pot-rimだけを鉢の
-     最上部（top:0%）に配置している。鉢本体（planter.svgのpath）の
-     輪郭自体は変更していない。
-     .pot-panel（左右11.5%インセット）には含めず.pot直下に独立させ、
-     鉢の上フチ幅の90〜95%程度（left/right:4%）まで広げている。
-     フチ付近は鉢の輪郭がほぼ全幅あるため、この広さでもはみ出さない。 */
+  /* .pot-rimは見た目を持たない配置専用コンテナにする。
+     鉢の上フチの色・グラデーションはplanter.svgの胴体パス自体
+     （y=0まで全幅で伸ばしてある）がそのまま担っているため、ここで
+     背景色/border/box-shadow/border-radiusを持たせると鉢のフチの上に
+     もう一枚別のフチが乗っているような二重の見た目になってしまう。
+     入力欄・送信ボタンが鉢の上フチの中央に収まる最小限のpaddingだけ残し、
+     位置（left/right:4%＝鉢幅の90〜95%程度、top:0%）はそのまま維持する。 */
   .pot-rim {
     position: absolute;
     left: 4%;
@@ -569,9 +568,6 @@
     display: flex;
     align-items: center;
     padding: 7px 8px;
-    background: linear-gradient(180deg, #f2b483 0%, #c97a45 100%);
-    border-radius: 16px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.22);
   }
   .chatbar {
     display: flex;
