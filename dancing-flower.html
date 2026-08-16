@@ -9,6 +9,12 @@
     --petal: #ffdd00;
     --face: #141414;
     --eye: #fff5cc;
+    /* 質感統一用トークン（既存の見た目に近い値へ緩やかに収束させる） */
+    --ui-shadow-soft: 0 4px 14px rgba(0,0,0,0.18);
+    --ui-shadow-inset-sm: inset 0 1px 2px rgba(0,0,0,0.07);
+    --text-strong: rgba(255,255,255,0.9);
+    --text-mid: rgba(255,255,255,0.7);
+    --text-soft: rgba(255,255,255,0.5);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { min-height: 100%; }
@@ -149,18 +155,31 @@
   }
   .flower.pet-sway { animation: petSway 1s ease-in-out 1; }
 
+  /* SVG化した葉は根元→先端が水平外向きになるよう.leaf-img側で補正済みのため、
+     .leaf（wrapper）側の回転符号は「水平基準から見た角度」がそのまま
+     水平からの上向き角度になる。数値検証の結果、水平外向き基準では
+     左葉=正の角度／右葉=負の角度で葉先が上がることを確認したため、
+     SVG化前（CSS描画の葉）とは符号を反転させている。 */
+  /* 0%/100%は通常時（leafSwayL/R）と同じ--leaf-restを参照し、
+     基準角度がズレないようにする（.leaf.l/.leaf.rで定義）。 */
   @keyframes leafPetUpL {
-    0%, 100% { transform: rotate(-28deg); }
-    30% { transform: rotate(-72deg); }
-    60% { transform: rotate(-58deg); }
-  }
-  @keyframes leafPetUpR {
-    0%, 100% { transform: rotate(28deg); }
+    0%, 100% { transform: rotate(var(--leaf-rest)); }
     30% { transform: rotate(72deg); }
     60% { transform: rotate(58deg); }
   }
-  .leaf.l.pet-leaf-up { animation: leafPetUpL 0.9s ease-in-out 1; }
-  .leaf.r.pet-leaf-up { animation: leafPetUpR 0.9s ease-in-out 1; }
+  @keyframes leafPetUpR {
+    0%, 100% { transform: rotate(var(--leaf-rest)); }
+    30% { transform: rotate(-72deg); }
+    60% { transform: rotate(-58deg); }
+  }
+  /* fill-mode:forwardsが無いと、0.9s経過でアニメーションが「終了」した瞬間
+     transformへの寄与が消えてtransform:none（無回転）へ一瞬戻ってしまい、
+     そこへJS側のクラス削除（setTimeout）が数ms遅れて追いつくことで
+     「回転済み→一瞬0°→leafSwayの角度」と二段階にスナップして見える
+     （葉っぱが「ビクッ」と跳ねる不具合の原因）。forwardsで100%地点の値を
+     クラスが外れるまで保持し続けるようにして、この隙間を無くす。 */
+  .leaf.l.pet-leaf-up { animation: leafPetUpL 0.9s ease-in-out 1 forwards; }
+  .leaf.r.pet-leaf-up { animation: leafPetUpR 0.9s ease-in-out 1 forwards; }
 
   /* 撫でたときのハート・音符（DOMに一時要素を追加してJS側で削除する） */
   .pet-effect-layer {
@@ -244,6 +263,15 @@
     border-radius: 50%;
     box-shadow: inset -8px -10px 22px rgba(0,0,0,0.55);
   }
+  /* 顔にごく弱い立体感（目の形やレイアウトには影響しない装飾のみ） */
+  .face::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle at 35% 26%, rgba(255,255,255,0.09) 0%, transparent 45%);
+  }
   .eye {
     position: absolute;
     top: 44%;
@@ -259,11 +287,49 @@
     opacity: 0.12;
     box-shadow: 0 0 2px rgba(255,221,0,0.2);
   }
-  /* 10秒無操作の待機モーション：目の光がゆっくり消える */
+  /* 10秒無操作の待機モーション：目の光がゆっくり消える（目の形自体は変更しない） */
   .eye.sleep {
     opacity: 0.15;
     box-shadow: 0 0 2px rgba(255,221,0,0.15);
     transition: opacity 0.8s ease, box-shadow 0.8s ease;
+  }
+  /* 睡眠中は花全体の揺れをごく弱くする（--ampは通常時にJSがinline styleで設定するため、
+     ここだけ!importantで上書きする。emotionMotion/petMotionの各アニメーションはこの変数を
+     使っていないため影響しない） */
+  .flower.sleeping { --amp: 0.22 !important; }
+
+  /* 顔の右上付近に表示する専用のZzz…表示（通常の会話吹き出しとは別要素）。
+     「Z」「z」「z」を右上へ少しずつ小さく並べ、非常にゆっくり浮かせる程度にとどめる。 */
+  .zzz {
+    position: absolute;
+    top: 10%;
+    right: 12%;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .zzz span {
+    position: absolute;
+    font-weight: 600;
+    color: rgba(255,240,200,0.8);
+    text-shadow: 0 0 5px rgba(255,221,0,0.3);
+    opacity: 0;
+  }
+  .zzz .zzz-1 { top: 0;    left: 0;   font-size: 13px; }
+  .zzz .zzz-2 { top: -8px; left: 9px; font-size: 10px; }
+  .zzz .zzz-3 { top: -14px; left: 16px; font-size: 8px; }
+  .zzz.show span { animation: zzzDrift 4.4s ease-in-out infinite; }
+  .zzz.show .zzz-2 { animation-delay: 0.5s; }
+  .zzz.show .zzz-3 { animation-delay: 1s; }
+  @keyframes zzzDrift {
+    0%   { opacity: 0;   transform: translateY(0); }
+    18%  { opacity: 0.8; }
+    70%  { opacity: 0.8; transform: translateY(-5px); }
+    100% { opacity: 0;   transform: translateY(-8px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .zzz.show span { animation: none; opacity: 0.75; }
   }
   /* 喋っている間の明滅 */
   .eye.talking { animation: eyeFlicker 0.5s ease-in-out infinite; }
@@ -285,37 +351,52 @@
     border-radius: 6px;
     z-index: -1;
   }
+  /* 葉の輪郭はSVG（SVG/nature028.svg）の実データを使用する。
+     .leafは位置・回転の土台（既存のleafSway/leafPetUpアニメーションはこれまで通りここに適用）、
+     中の.leaf-imgがSVG画像本体で、静的なtranslate/rotate/scaleXで
+     「根本が.leafの回転支点（stem側の角）付近に来る」向きへ補正している。 */
   .leaf {
     position: absolute;
-    width: 18%;
-    height: 11%;
-    background: #8fce6a;
-    border: 2.5px solid #5a9e3f;
+    width: 20%;
+    height: 20%;
     z-index: -1;
     will-change: transform;
   }
   .leaf.l {
+    /* 通常時・pet-leaf-up双方の基準角度をここ一箇所だけで定義する
+       （leafSwayL/leafPetUpLの両方がこの変数を参照する） */
+    --leaf-rest: 28deg;
     bottom: 11%;
     left: 48%;
-    margin-left: -18%;
+    margin-left: -20%;
     transform-origin: right bottom;
-    border-radius: 100% 0 60% 20%;
     animation: leafSwayL 2.4s ease-in-out infinite;
   }
   .leaf.r {
+    --leaf-rest: -28deg;
     bottom: 8%;
     left: 52%;
     transform-origin: left bottom;
-    border-radius: 0 100% 20% 60%;
     animation: leafSwayR 2.4s ease-in-out infinite;
   }
+  .leaf-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* SVGの葉は根本が左下・先端が右上を向いた1つの絵。
+     rotate(44deg)で根本→先端の向きを一旦水平にそろえ、translateで
+     根本が.leafの回転支点（右下/左下の角）に近づくよう位置補正する。
+     左葉はscaleX(-1)で左右反転して使う。 */
+  .leaf.r .leaf-img { transform: translate(10.5%, 50%) rotate(44deg); }
+  .leaf.l .leaf-img { transform: translate(-10.5%, 50%) rotate(-44deg) scaleX(-1); }
   @keyframes leafSwayL {
-    0%,100% { transform: rotate(calc(-28deg + -4deg * var(--amp))); }
-    50%     { transform: rotate(calc(-28deg + 4deg * var(--amp))); }
+    0%,100% { transform: rotate(calc(var(--leaf-rest) + 4deg * var(--amp))); }
+    50%     { transform: rotate(calc(var(--leaf-rest) + -4deg * var(--amp))); }
   }
   @keyframes leafSwayR {
-    0%,100% { transform: rotate(calc(28deg + 4deg * var(--amp))); }
-    50%     { transform: rotate(calc(28deg + -4deg * var(--amp))); }
+    0%,100% { transform: rotate(calc(var(--leaf-rest) + -4deg * var(--amp))); }
+    50%     { transform: rotate(calc(var(--leaf-rest) + 4deg * var(--amp))); }
   }
 
   /* 花・茎・葉・植木鉢・操作パネルをひとつのキャラクターとして縦につなげる */
@@ -333,30 +414,31 @@
     z-index: 1;
     margin-top: -14px;
     width: min(90vw, 360px);
-    height: clamp(160px, 46vw, 190px);
-    min-height: 160px;
+    height: clamp(140px, 40vw, 166px);
+    min-height: 140px;
   }
-  /* 鉢本体だけでシルエットを作る（上辺は広く、下辺は狭い台形。下の角だけ少し丸め） */
+  /* 鉢本体のシルエットはSVG（SVG/planter.svg）を使用する。
+     clip-path/polygonのカクカクした直線輪郭をやめ、リム＋滑らかに膨らむ側面＋
+     丸めた底角を持つ形状に置き換えた。色・グラデーション・ハイライト/陰影は
+     SVG側に内蔵しているため、ここでは配置のみを担当する。 */
   .pot-body {
     position: absolute;
     inset: 0;
     z-index: 1;
-    clip-path: polygon(
-      2% 0%, 98% 0%,
-      88% 94%, 80% 100%,
-      20% 100%, 12% 94%
-    );
-    background: linear-gradient(155deg, #e39a63 0%, #b96234 48%, #7c3a1a 100%);
-    box-shadow: inset 0 -10px 16px rgba(0,0,0,0.28);
+    width: 100%;
+    height: 100%;
+    display: block;
   }
 
-  /* 植木鉢正面に埋め込まれた操作パネル（チャット／この花について／プロフィール、背景は透明） */
+  /* 植木鉢正面に埋め込まれた操作パネル（チャット／この花について／プロフィール、背景は透明）。
+     SVGの鉢は下部が丸くすぼまる形状のため、旧来のclip-path版より左右・下方向の
+     余白を少し広めに取り、鉢の輪郭からはみ出さないようにしている。 */
   .pot-panel {
     position: absolute;
-    left: 12%;
-    right: 12%;
-    top: 10%;
-    bottom: 10%;
+    left: 14%;
+    right: 14%;
+    top: 8%;
+    bottom: 12%;
     z-index: 4;
     display: flex;
     flex-direction: column;
@@ -364,28 +446,28 @@
     /* 鉢の中央ではなく上寄せにして、入力欄を鉢の上端に近づける
        （入力欄→ステータス→プロフィールの順序はそのまま維持） */
     justify-content: flex-start;
-    gap: 5px;
+    gap: 4px;
   }
   .pot-about {
     font-size: 10px;
-    line-height: 1.3;
+    line-height: 1.4;
     color: #fdf1e2;
     text-align: center;
-    opacity: 0.92;
+    opacity: 0.9;
   }
   .pot-profile {
     font-size: 9.5px;
-    line-height: 1.3;
+    line-height: 1.4;
     color: #fdf1e2;
     text-align: center;
-    opacity: 0.85;
-    border-top: 1px solid rgba(255,255,255,0.15);
+    opacity: 0.7;
+    border-top: 1px solid rgba(255,255,255,0.14);
     padding-top: 4px;
   }
   .pot-profile-title {
     font-size: 9px;
     letter-spacing: 0.08em;
-    opacity: 0.7;
+    opacity: 0.55;
     margin-bottom: 1px;
   }
 
@@ -402,7 +484,7 @@
     text-align: center;
     color: #fef7d0;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
     padding: 0 8px;
     height: 0;
     overflow: hidden;
@@ -418,11 +500,12 @@
     height: auto;
     overflow: visible;
     margin-bottom: 10px;
-    padding: 10px 14px;
-    background: #fff;
-    color: #1a1a1a;
-    border: 1px solid rgba(0,0,0,0.12);
+    padding: 11px 16px;
+    background: #fffaf2;
+    color: #2a1f14;
+    border: 1px solid rgba(60,40,20,0.1);
     border-radius: 16px;
+    box-shadow: var(--ui-shadow-soft);
     overflow-wrap: break-word;
   }
   .speech.show::after {
@@ -432,7 +515,7 @@
     left: 50%;
     transform: translateX(-50%);
     border: 7px solid transparent;
-    border-top-color: #fff;
+    border-top-color: #fffaf2;
   }
   .chatbar {
     display: flex;
@@ -443,15 +526,20 @@
     flex: 1;
     min-width: 0;
     background: #fdf6ea;
-    border: 1px solid rgba(0,0,0,0.18);
+    border: 1px solid rgba(0,0,0,0.16);
     border-radius: 20px;
     padding: 8px 14px;
     color: #3a2415;
     font-size: 13px;
     outline: none;
+    box-shadow: var(--ui-shadow-inset-sm);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .chatbar input::placeholder { color: #8a6a4f; }
-  .chatbar input:focus { border-color: #b96234; }
+  .chatbar input:focus {
+    border-color: #b96234;
+    box-shadow: var(--ui-shadow-inset-sm), 0 0 0 3px rgba(185,98,52,0.15);
+  }
   .chatbar button {
     flex-shrink: 0;
     white-space: nowrap;
@@ -464,8 +552,18 @@
     padding: 0 18px;
     cursor: pointer;
     font-size: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
   }
-  .chatbar button:disabled { opacity: 0.5; cursor: default; }
+  .chatbar button:hover:not(:disabled) {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+  .chatbar button:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  }
+  .chatbar button:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
 
   /* チャット入力欄のすぐ下・鉢の外側に、小さく控えめな命名方法の案内を表示 */
   .naming-hint {
@@ -490,7 +588,7 @@
   .privacy-toggle {
     background: none;
     border: none;
-    color: rgba(255,255,255,0.45);
+    color: rgba(255,255,255,0.5);
     font-size: 11px;
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -540,7 +638,7 @@
   }
   .other-apps-title {
     font-size: 10.5px;
-    color: rgba(255,255,255,0.45);
+    color: rgba(255,255,255,0.5);
     margin-bottom: 8px;
   }
   .other-apps-links {
@@ -583,8 +681,8 @@
     <div class="stage">
       <div class="flower" id="flower" style="--amp: 1;">
         <div class="stem"></div>
-        <div class="leaf l"></div>
-        <div class="leaf r"></div>
+        <div class="leaf l"><img class="leaf-img" src="SVG/nature028.svg" alt="" draggable="false"></div>
+        <div class="leaf r"><img class="leaf-img" src="SVG/nature028.svg" alt="" draggable="false"></div>
         <div class="head">
           <div class="petals" id="petals">
             <svg viewBox="0 0 500 500" id="petalSvg"></svg>
@@ -593,13 +691,14 @@
             <div class="eye left"></div>
             <div class="eye right"></div>
           </div>
+          <div class="zzz" id="zzz"><span class="zzz-1">Z</span><span class="zzz-2">z</span><span class="zzz-3">z</span></div>
         </div>
       </div>
       <div class="pet-effect-layer" id="petEffectLayer"></div>
     </div>
 
     <div class="pot">
-      <div class="pot-body"></div>
+      <img class="pot-body" src="SVG/planter.svg" alt="" draggable="false">
       <div class="pot-panel">
         <div class="chatbar">
           <input id="chatInput" type="text" placeholder="花に話しかける…" autocomplete="off">
@@ -1055,10 +1154,14 @@
       leafL.classList.add('pet-leaf-up');
       leafR.classList.add('pet-leaf-up');
       clearTimeout(petLeafTimer);
+      // CSS側(leafPetUpL/R)は0.9s＝900ms。setTimeoutは実際には指定時間より
+      // 遅れて発火することはあってもここより早く発火することはないため、
+      // 950msにしてCSSアニメーションが確実に自然完了（fill-mode:forwardsで
+      // 100%地点を保持した状態）してからクラスを外すようにする。
       petLeafTimer = setTimeout(() => {
         leafL.classList.remove('pet-leaf-up');
         leafR.classList.remove('pet-leaf-up');
-      }, 900);
+      }, 950);
     }
 
     // ハート（1〜3個。控えめにする場合は1個だけ）
@@ -1091,20 +1194,21 @@
 
   // --- 10秒無操作でZzz…表示＋目の光OFFになる待機モーション ---
   const IDLE_SLEEP_MS = 10000;
+  const zzz = document.getElementById('zzz');
   let idleTimer = null;
   let isAsleep = false;
   function wakeUp(){
     if (!isAsleep) return;
     isAsleep = false;
     eyes.forEach(e => e.classList.remove('sleep'));
-    if (speech.textContent === 'Zzz…' && speech.classList.contains('show')) {
-      speech.classList.remove('show');
-    }
+    flower.classList.remove('sleeping');
+    zzz.classList.remove('show');
   }
   function fallAsleep(){
     isAsleep = true;
     eyes.forEach(e => e.classList.add('sleep'));
-    showSpeech('Zzz…');
+    flower.classList.add('sleeping');
+    zzz.classList.add('show'); // 通常の会話吹き出しは使わず、専用のZzz表示だけを出す
   }
   function resetIdleTimer(){
     wakeUp();
@@ -1148,18 +1252,25 @@
   const sc = document.getElementById('starfield');
   const ctx2 = sc.getContext('2d');
   let stars = [];
+  // 星をサイズ・明るさで3段階に分け、瞬くのは一部の星だけに絞る（見た目の落ち着き重視）
   function initStars(){
     sc.width = window.innerWidth;
     sc.height = window.innerHeight;
-    const n = Math.floor((sc.width * sc.height) / 5000);
+    const n = Math.floor((sc.width * sc.height) / 6000); // 増やしすぎない
     stars = [];
     for (let i = 0; i < n; i++) {
+      const tier = Math.random();
+      let r, base;
+      if (tier < 0.65)      { r = rnd(0.35, 0.7);  base = rnd(0.2, 0.36); }  // 小・暗（多数）
+      else if (tier < 0.92) { r = rnd(0.8, 1.15);  base = rnd(0.4, 0.55); }  // 中
+      else                  { r = rnd(1.2, 1.7);   base = rnd(0.55, 0.75); } // 大・明（少数）
+      const twinkles = Math.random() < 0.18; // 一部だけ非常にゆっくり瞬く
       stars.push({
         x: Math.random() * sc.width,
         y: Math.random() * sc.height,
-        r: Math.random() * 1.4 + 0.3,
-        base: Math.random() * 0.5 + 0.3,
-        sp: Math.random() * 0.02 + 0.005,
+        r, base,
+        amp: twinkles ? rnd(0.15, 0.25) : 0,
+        sp: twinkles ? rnd(0.003, 0.007) : 0,
         ph: Math.random() * Math.PI * 2
       });
     }
@@ -1167,8 +1278,11 @@
   function drawStars(){
     ctx2.clearRect(0, 0, sc.width, sc.height);
     for (const s of stars) {
-      s.ph += s.sp;
-      const a = s.base + Math.sin(s.ph) * 0.3;
+      let a = s.base;
+      if (s.amp) {
+        s.ph += s.sp;
+        a = s.base + Math.sin(s.ph) * s.amp;
+      }
       ctx2.globalAlpha = Math.max(0, a);
       ctx2.fillStyle = '#fff';
       ctx2.beginPath();

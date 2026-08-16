@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160">
+  <defs>
+    <linearGradient id="potBodyGrad" x1="15%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#eba26c"/>
+      <stop offset="46%" stop-color="#b96234"/>
+      <stop offset="100%" stop-color="#762f16"/>
+    </linearGradient>
+    <linearGradient id="potRimGrad" x1="20%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%" stop-color="#f2b483"/>
+      <stop offset="100%" stop-color="#c97a45"/>
+    </linearGradient>
+    <clipPath id="potBodyClip">
+      <path d="M 20,14 C 16,90 10,138 52,150 Q 38,160 66,160 L 234,160 Q 262,160 248,150 C 290,138 284,90 280,14 L 20,14 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- 胴体：上が広く下にすぼまる、側面はゆるやかに外側へ膨らむ曲線、底の角も丸め -->
+  <path fill="url(#potBodyGrad)" d="M 20,14 C 16,90 10,138 52,150 Q 38,160 66,160 L 234,160 Q 262,160 248,150 C 290,138 284,90 280,14 L 20,14 Z"/>
+
+  <!-- 胴体下部のごく軽い陰影（陶器感を出しすぎない程度） -->
+  <ellipse cx="150" cy="158" rx="130" ry="24" fill="#000000" opacity="0.15" clip-path="url(#potBodyClip)"/>
+
+  <!-- 上部のリム（胴体より左右に張り出し、角を丸める） -->
+  <rect x="8" y="0" width="284" height="22" rx="11" fill="url(#potRimGrad)"/>
+
+  <!-- リムの軽いハイライト -->
+  <ellipse cx="70" cy="5" rx="46" ry="3.2" fill="#ffffff" opacity="0.22"/>
+</svg>
