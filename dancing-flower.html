@@ -45,20 +45,15 @@
   .stage {
     position: relative;
     z-index: 1;
-    /* 花自体のサイズ（従来通り）と、吹き出し用に常に確保しておく上部の余白。
-       余白はビューポートが低いほど小さくなるが、吹き出し側のmax-heightと
-       常に同じ基準値を使うため、どんな高さでも吹き出しの上端が
-       この予約領域からはみ出すことはない。 */
     --flower-size: min(70vw, 340px);
-    --speech-reserve: min(18vh, 110px);
     width: var(--flower-size);
-    height: calc(var(--flower-size) + var(--speech-reserve));
+    height: var(--flower-size);
     display: flex;
     align-items: flex-end;
     justify-content: center;
   }
 
-  /* 揺れる本体（花全体）：.stageの下端に固定表示し、上に生まれた分が吹き出しの予約領域になる */
+  /* 揺れる本体（花全体） */
   .flower {
     position: relative;
     width: var(--flower-size);
@@ -264,6 +259,12 @@
     opacity: 0.12;
     box-shadow: 0 0 2px rgba(255,221,0,0.2);
   }
+  /* 10秒無操作の待機モーション：目の光がゆっくり消える */
+  .eye.sleep {
+    opacity: 0.15;
+    box-shadow: 0 0 2px rgba(255,221,0,0.15);
+    transition: opacity 0.8s ease, box-shadow 0.8s ease;
+  }
   /* 喋っている間の明滅 */
   .eye.talking { animation: eyeFlicker 0.5s ease-in-out infinite; }
   @keyframes eyeFlicker {
@@ -360,7 +361,9 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;
+    /* 鉢の中央ではなく上寄せにして、入力欄を鉢の上端に近づける
+       （入力欄→ステータス→プロフィールの順序はそのまま維持） */
+    justify-content: flex-start;
     gap: 5px;
   }
   .pot-about {
@@ -386,14 +389,14 @@
     margin-bottom: 1px;
   }
 
-  /* 花の近くに浮かぶ吹き出し */
+  /* 花の近くに浮かぶ吹き出し。
+     絶対配置ではなく.planter内の通常フローに乗せることで、内容に応じて
+     自然に縦へ伸びる（内部スクロールなし・省略なし）。非表示時はheight:0で
+     たたみ、花の位置に影響しないようにする。上端が切れる問題は、
+     吹き出し自体を制限するのではなくbody側のoverflow-y:autoでページ全体を
+     スクロールして解決する。 */
   .speech {
-    position: absolute;
-    left: 50%;
-    /* .stageの上端(100%)ではなく、花自体の上端（予約領域の直上）を基準にする */
-    bottom: var(--flower-size);
-    margin-bottom: 10px;
-    transform: translateX(-50%) translateY(6px) scale(0.94);
+    position: relative;
     width: max-content;
     max-width: min(78vw, 250px);
     text-align: center;
@@ -401,24 +404,26 @@
     font-size: 14px;
     line-height: 1.5;
     padding: 0 8px;
+    height: 0;
+    overflow: hidden;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease, transform 0.25s ease;
+    transform: translateY(6px) scale(0.94);
     z-index: 2;
   }
   .speech.show {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateY(0) scale(1);
+    height: auto;
+    overflow: visible;
+    margin-bottom: 10px;
     padding: 10px 14px;
     background: #fff;
     color: #1a1a1a;
     border: 1px solid rgba(0,0,0,0.12);
     border-radius: 16px;
     overflow-wrap: break-word;
-    /* 文章量が増えても.stageの予約領域からはみ出さないよう上限を設け、
-       それでも長い場合は吹き出し内でスクロールできるようにする */
-    max-height: calc(var(--speech-reserve) - 20px);
-    overflow-y: auto;
   }
   .speech.show::after {
     content: '';
@@ -574,6 +579,7 @@
 <body>
   <div class="stars"><canvas id="starfield"></canvas></div>
   <div class="planter">
+    <div class="speech" id="speech"></div>
     <div class="stage">
       <div class="flower" id="flower" style="--amp: 1;">
         <div class="stem"></div>
@@ -589,7 +595,6 @@
           </div>
         </div>
       </div>
-      <div class="speech" id="speech"></div>
       <div class="pet-effect-layer" id="petEffectLayer"></div>
     </div>
 
@@ -763,7 +768,7 @@
   const eyes = document.querySelectorAll('.eye');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function blink(){
-    if (eyes[0] && eyes[0].classList.contains('talking')) return; // 喋り中は明滅優先
+    if (eyes[0] && (eyes[0].classList.contains('talking') || eyes[0].classList.contains('sleep'))) return; // 喋り中・睡眠中は明滅しない
     eyes.forEach(e => e.classList.add('blink'));
     setTimeout(() => eyes.forEach(e => e.classList.remove('blink')), 110);
   }
@@ -829,12 +834,20 @@
     try { localStorage.setItem(NAME_KEY, name); } catch (e) { /* 保存できなくても会話自体は継続する */ }
   }
 
+  // 保存済みの名前があれば、入力欄のプレースホルダーを「○○に話しかける…」に切り替える
+  function updateChatPlaceholder(){
+    const name = loadName();
+    chatInput.placeholder = name ? `${name}に話しかける…` : '花に話しかける…';
+  }
+  updateChatPlaceholder();
+
   // 全記憶削除用（会話履歴・訪問回数・名前のすべてを消す）
   function clearFlowerMemory(){
     try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
     try { localStorage.removeItem(VISITS_KEY); } catch (e) {}
     try { localStorage.removeItem(NAME_KEY); } catch (e) {}
     history.length = 0;
+    updateChatPlaceholder();
   }
   window.clearFlowerMemory = clearFlowerMemory;
 
@@ -921,10 +934,11 @@
     chatSend.disabled = true;
     showSpeech('…');
     startTalkingEyes();
+    resetIdleTimer(); // メッセージ送信も操作とみなし、待機モーションを解除する
 
     // ユーザーの発言に命名の意図が明確に含まれていれば、会話履歴とは別に名前を保存する
     const detectedName = detectNamingIntent(msg);
-    if (detectedName) saveName(detectedName);
+    if (detectedName) { saveName(detectedName); updateChatPlaceholder(); }
 
     // 保存済みの名前があれば、SYSTEM_BASEに動的に追記してClaudeへ渡す
     const currentName = loadName();
@@ -988,6 +1002,7 @@
       if (history.length > 20) history.splice(0, history.length - 20);
       saveHistory(history);
       if (status) potAbout.textContent = status;
+      wakeUp(); // 応答待ちが長引いて待機モーションに入っていた場合に備えて解除する
       showSpeech(reply);
       emotionMotion(detectEmotion(status, reply));
       flickerFor(Math.min(4000, 900 + reply.length * 90)); // 喋る長さぶん明滅
@@ -1001,6 +1016,11 @@
 
   chatSend.addEventListener('click', talk);
   chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') talk(); });
+  // ソフトウェアキーボード表示等で入力欄が隠れてしまうケースの保険。
+  // 'nearest'なので既に見えている場合は何もせず、大きなジャンプは発生させない。
+  chatInput.addEventListener('focus', () => {
+    chatInput.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
 
   // --- タップ/クリックで「撫でられて喜ぶ」専用モーション ---
   const petPhrases = ['えへへ', 'そこ好き', 'もっと撫でて', 'くすぐったい', 'うれしい', 'ふふっ'];
@@ -1068,6 +1088,61 @@
   }
 
   document.querySelector('.stage').addEventListener('click', petMotion);
+
+  // --- 10秒無操作でZzz…表示＋目の光OFFになる待機モーション ---
+  const IDLE_SLEEP_MS = 10000;
+  let idleTimer = null;
+  let isAsleep = false;
+  function wakeUp(){
+    if (!isAsleep) return;
+    isAsleep = false;
+    eyes.forEach(e => e.classList.remove('sleep'));
+    if (speech.textContent === 'Zzz…' && speech.classList.contains('show')) {
+      speech.classList.remove('show');
+    }
+  }
+  function fallAsleep(){
+    isAsleep = true;
+    eyes.forEach(e => e.classList.add('sleep'));
+    showSpeech('Zzz…');
+  }
+  function resetIdleTimer(){
+    wakeUp();
+    clearTimeout(idleTimer);
+    if (!reduceMotion) idleTimer = setTimeout(fallAsleep, IDLE_SLEEP_MS);
+  }
+  document.querySelector('.stage').addEventListener('click', resetIdleTimer);
+  chatInput.addEventListener('focus', resetIdleTimer);
+  resetIdleTimer();
+
+  // --- 花びら占い（花びら部分をタップすると簡単な占いが出る） ---
+  const petalFortunes = [
+    '今日はいいことがありそうだね',
+    '小さな幸運が転がってきそうだね',
+    '無理せずゆっくりいこうね',
+    '誰かに話しかけてみると良さそうだね',
+    '今日はのんびり過ごすのが吉だね',
+    'ふとした瞬間にいいことがありそうだね',
+    'ちょっとしたご褒美がありそうだね',
+    '今日は何かいいことが起きる予感がするね',
+  ];
+  let lastFortune = null;
+  function petalFortune(){
+    resetIdleTimer();
+    let fortune;
+    do {
+      fortune = petalFortunes[Math.floor(Math.random() * petalFortunes.length)];
+    } while (fortune === lastFortune && petalFortunes.length > 1);
+    lastFortune = fortune;
+    showSpeech(`占い：${fortune}`);
+    clearTimeout(tapHideTimer);
+    tapHideTimer = setTimeout(() => speech.classList.remove('show'), 2200);
+    emotionMotion('happy');
+  }
+  petals.addEventListener('click', (e) => {
+    e.stopPropagation(); // .stage側の通常タップ反応（petMotion）とは分ける
+    petalFortune();
+  });
 
   // --- 星空（ちらつき） ---
   const sc = document.getElementById('starfield');
