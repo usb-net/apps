@@ -254,6 +254,9 @@
   .petal-shape {
     stroke-linejoin: round;
     transform-origin: 250px 250px;
+    /* 今日の運勢（花びらカラー占い）で色/拡大/グローを付け外しする際、
+       瞬間的な切り替えではなく滑らかに変化・復帰するようにする */
+    transition: transform 0.25s ease, filter 0.25s ease, fill 0.4s ease;
   }
   .petal-outer { fill: #ffb020; stroke: #e08a1a; stroke-width: 3; }
   .petal-inner { fill: #ffe14d; stroke: #eec01f; stroke-width: 3; }
@@ -504,6 +507,37 @@
   .pot-guide-emoji {
     flex-shrink: 0;
     margin-right: 0.5em;
+  }
+  /* 「今日の運勢」だけ実際に押せるボタンにする。他の案内項目と見た目の
+     ノイズが出ないよう、通常時は他のliとほぼ同じ見た目にとどめ、
+     hover/active時だけ軽く反応してタップ可能なことがわかる程度にする */
+  .pot-guide-fortune-btn {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    width: 100%;
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 3px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #fdf1e2;
+    opacity: 0.88;
+    cursor: pointer;
+    border-radius: 10px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+  }
+  .pot-guide-fortune-btn:hover,
+  .pot-guide-fortune-btn:focus-visible {
+    background: rgba(255,255,255,0.12);
+    opacity: 1;
+  }
+  .pot-guide-fortune-btn:active {
+    background: rgba(255,255,255,0.2);
+    transform: scale(0.98);
   }
 
   /* 花の近くに浮かぶ吹き出し。
@@ -760,7 +794,11 @@
         <div class="pot-about" id="potAbout">はなしかけてみてね</div>
         <ul class="pot-guide-list">
           <li><span class="pot-guide-emoji">🌤</span>今日や明日の天気を聞ける</li>
-          <li><span class="pot-guide-emoji">🔮</span>今日の運勢を占える</li>
+          <li>
+            <button type="button" id="fortuneBtn" class="pot-guide-fortune-btn">
+              <span class="pot-guide-emoji">🔮</span>今日の運勢
+            </button>
+          </li>
           <li><span class="pot-guide-emoji">💬</span>名前を覚えてくれる</li>
           <li><span class="pot-guide-emoji">💕</span>花を触るとよろこぶ</li>
           <li><span class="pot-guide-emoji">🎵</span>好きな名前をつけられる</li>
@@ -824,7 +862,10 @@
       + `Q ${s1x} ${s1y} ${t1x} ${t1y} `
       + `Q ${tcx} ${tcy} ${t2x} ${t2y} `
       + `Q ${s2x} ${s2y} ${b2x} ${b2y} Z`;
-    return `<path class="petal-shape ${cls}" d="${d}" style="transform: rotate(${rnd(-2,2)}deg);"/>`;
+    // data-rotに保持しておき、占いモードでの拡大/復帰時にこの角度を土台にして
+    // transformを組み立てられるようにする（ランダムな初期傾きを失わないため）
+    const rot = rnd(-2, 2);
+    return `<path class="petal-shape ${cls}" data-rot="${rot.toFixed(2)}" d="${d}" style="transform: rotate(${rot.toFixed(2)}deg);"/>`;
   }
   let petalPath = '';
   // 外側リング（16枚・オレンジ・ふっくら）
@@ -1086,6 +1127,7 @@
     if (!msg) return;
     chatInput.value = '';
     chatSend.disabled = true;
+    exitFortuneMode(); // 会話送信で占いモードは強制終了
     showSpeech('…');
     startTalkingEyes();
     resetIdleTimer(); // メッセージ送信も操作とみなし、待機モーションを解除する
@@ -1264,6 +1306,7 @@
     eyes.forEach(e => e.classList.add('sleep'));
     flower.classList.add('sleeping');
     zzz.classList.add('show'); // 通常の会話吹き出しは使わず、専用のZzz表示だけを出す
+    exitFortuneMode(); // sleep移行時も占いモードを強制終了し、花びらを通常色へ戻す
   }
   function resetIdleTimer(){
     wakeUp();
@@ -1274,34 +1317,217 @@
   chatInput.addEventListener('focus', resetIdleTimer);
   resetIdleTimer();
 
-  // --- 花びら占い（花びら部分をタップすると簡単な占いが出る） ---
-  const petalFortunes = [
-    '今日はいいことがありそうだね',
-    '小さな幸運が転がってきそうだね',
-    '無理せずゆっくりいこうね',
-    '誰かに話しかけてみると良さそうだね',
-    '今日はのんびり過ごすのが吉だね',
-    'ふとした瞬間にいいことがありそうだね',
-    'ちょっとしたご褒美がありそうだね',
-    '今日は何かいいことが起きる予感がするね',
-  ];
-  let lastFortune = null;
-  function petalFortune(){
-    resetIdleTimer();
-    let fortune;
+  // --- 今日の運勢（花びらカラー占い） ---
+  // 「🔮 今日の運勢」ボタンで開始し、fortuneMode中だけ花びらタップが色選択になる。
+  // 通常時の花びらタップは花本体を撫でた時と完全に同じ扱い（petMotion）にする。
+  let fortuneMode = false;
+  let fortuneColorRevertTimer = null;
+  let lastFortuneResultText = null;
+
+  const FORTUNE_COLOR_HEX = {
+    red:    '#ff5a5a',
+    blue:   '#4da6ff',
+    green:  '#63c76a',
+    purple: '#b07aef',
+    pink:   '#ff8fc0',
+    orange: '#ff9f40',
+  };
+  const FORTUNE_COLOR_KEYS = Object.keys(FORTUNE_COLOR_HEX);
+
+  // 色ごとの運勢ジャンル。吉凶は固定せず、調子/アドバイス/アイテムは
+  // 複数候補からランダムに組み合わせるので、同じ色でも結果は毎回変わる。
+  // 不安を煽る内容・断定的な凶事は含めない（明るく軽い占いに限定）。
+  const FORTUNE_DATA = {
+    red: {
+      label: '赤',
+      category: 'チャレンジ運',
+      advice: [
+        '気になっていたことに思い切って挑戦してみると◎',
+        '新しいことを始めるにはいいタイミングかも',
+        '勢いに任せて動くといい流れに乗れそう',
+        '迷ったらまず一歩踏み出してみて',
+      ],
+      items: ['スニーカー', 'ストップウォッチ', '赤いペン', 'エナジードリンク'],
+    },
+    blue: {
+      label: '青',
+      category: '判断力運',
+      advice: [
+        '焦らずじっくり考えるといい判断ができそう',
+        '一呼吸置いてから動くとうまくいきそう',
+        '冷静な一言が頼りにされる日かも',
+        'メモを取っておくと後で役立ちそう',
+      ],
+      items: ['青いノート', '水筒', '腕時計', 'ハンカチ'],
+    },
+    green: {
+      label: '緑',
+      category: '休息運',
+      advice: [
+        '無理せずゆっくり休むと調子が整いそう',
+        '軽いストレッチが気分転換になりそう',
+        '早めに休むと明日が軽やかになりそう',
+        '深呼吸してひと休みしてみて',
+      ],
+      items: ['ハーブティー', '観葉植物', 'アイマスク', 'クッション'],
+    },
+    purple: {
+      label: '紫',
+      category: 'ひらめき運',
+      advice: [
+        'ふと思いついたことを試してみるといいかも',
+        'いつもと違う道を通ると発見がありそう',
+        'アイデアはすぐメモしておくと◎',
+        '直感を信じて動くとうまくいきそう',
+      ],
+      items: ['メモ帳', '万年筆', 'キャンドル', 'ノートPC'],
+    },
+    pink: {
+      label: 'ピンク',
+      category: '対人運',
+      advice: [
+        '気になる人に話しかけてみると良さそう',
+        '素直な気持ちを伝えると喜ばれそう',
+        '誰かの話をじっくり聞くと発見がありそう',
+        'ちょっとした一言が縁をつないでくれそう',
+      ],
+      items: ['マグカップ', 'リップクリーム', '手紙', 'ぬいぐるみ'],
+    },
+    orange: {
+      label: 'オレンジ',
+      category: '気分運',
+      advice: [
+        '気になっていたお店に行ってみると楽しめそう',
+        '好きな音楽を聴くと気分が上がりそう',
+        '甘いものでひと息つくと運気アップ',
+        '予定を詰め込みすぎず楽しむのが吉',
+      ],
+      items: ['お菓子', 'イヤホン', 'ひなたぼっこ', '好きな飲み物'],
+    },
+  };
+  const FORTUNE_MOODS = ['絶好調', '好調', 'ぼちぼち', '穏やか', 'じわじわ上向き', 'マイペース'];
+
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  // 色ごとに吉凶は固定しない：同じ色を選んでも毎回「調子・アドバイス・
+  // ラッキーアイテム」の組み合わせが変わるようにする
+  function generateFortuneResult(colorKey){
+    const data = FORTUNE_DATA[colorKey];
+    if (!data) return null;
+    let text;
+    let guard = 0;
     do {
-      fortune = petalFortunes[Math.floor(Math.random() * petalFortunes.length)];
-    } while (fortune === lastFortune && petalFortunes.length > 1);
-    lastFortune = fortune;
-    showSpeech(`占い：${fortune}`);
-    clearTimeout(tapHideTimer);
-    tapHideTimer = setTimeout(() => speech.classList.remove('show'), 2200);
-    emotionMotion('happy');
+      const mood = pick(FORTUNE_MOODS);
+      const advice = pick(data.advice);
+      const item = pick(data.items);
+      text = `${data.label}を選んだあなたは、今日は${data.category}が${mood}！${advice} ラッキーアイテム：${item} ✨`;
+      guard++;
+    } while (text === lastFortuneResultText && guard < 5);
+    lastFortuneResultText = text;
+    return text;
   }
+
+  // 隣り合う花びらが同じ色ばかりにならないよう、直前の色（と輪の先頭の色）を
+  // 避けながら1枚ずつ順番に色を決めていく
+  function pickFortuneColorKeyExcluding(excludeKeys){
+    const poolAll = FORTUNE_COLOR_KEYS.filter(k => !excludeKeys.includes(k));
+    const pool = poolAll.length ? poolAll : FORTUNE_COLOR_KEYS;
+    return pick(pool);
+  }
+  function assignRingColorKeys(count){
+    const keys = [];
+    for (let i = 0; i < count; i++) {
+      const exclude = [];
+      if (i > 0) exclude.push(keys[i - 1]);
+      if (i === count - 1 && count > 1) exclude.push(keys[0]);
+      keys.push(pickFortuneColorKeyExcluding(exclude));
+    }
+    return keys;
+  }
+  function applyPetalColor(el, key){
+    el.dataset.fortuneColor = key;
+    el.style.fill = FORTUNE_COLOR_HEX[key];
+  }
+  function assignAndColorPetals(){
+    // 外側リングと内側リングをそれぞれ別の輪として隣接チェックする
+    const outerEls = Array.from(svg.querySelectorAll('.petal-outer'));
+    const innerEls = Array.from(svg.querySelectorAll('.petal-inner'));
+    const outerKeys = assignRingColorKeys(outerEls.length);
+    const innerKeys = assignRingColorKeys(innerEls.length);
+    outerEls.forEach((el, i) => applyPetalColor(el, outerKeys[i]));
+    innerEls.forEach((el, i) => applyPetalColor(el, innerKeys[i]));
+  }
+
+  // 選択花びらの一時的な拡大＋グロー。data-rotに保持した元の傾きを土台にして
+  // transformを組み立てるので、生成時のランダムな傾きは失われない
+  function highlightPetal(el, on){
+    const rot = el.dataset.rot || '0';
+    if (on) {
+      el.style.transform = reduceMotion ? `rotate(${rot}deg)` : `rotate(${rot}deg) scale(1.18)`;
+      const hex = FORTUNE_COLOR_HEX[el.dataset.fortuneColor] || '#fff';
+      el.style.filter = `drop-shadow(0 0 6px ${hex})`;
+    } else {
+      el.style.transform = `rotate(${rot}deg)`;
+      el.style.filter = '';
+    }
+  }
+  function revertAllPetalColors(){
+    svg.querySelectorAll('.petal-shape').forEach(el => {
+      el.style.fill = '';
+      el.dataset.fortuneColor = '';
+      highlightPetal(el, false);
+    });
+  }
+  function scheduleFortuneColorRevert(delay){
+    clearTimeout(fortuneColorRevertTimer);
+    fortuneColorRevertTimer = setTimeout(revertAllPetalColors, delay);
+  }
+
+  // 会話送信・sleep移行など、占いモードを強制終了させたい場面で呼ぶ。
+  // 色の復帰待ちタイマーも含めて即座にリセットする
+  function exitFortuneMode(){
+    fortuneMode = false;
+    clearTimeout(fortuneColorRevertTimer);
+    revertAllPetalColors();
+  }
+
+  function startFortuneMode(){
+    // 占いモード中の再押下は一度リセットしてから再開始する
+    clearTimeout(fortuneColorRevertTimer);
+    resetIdleTimer();
+    fortuneMode = true;
+    showSpeech('気になる色の花びらを選んでね');
+    assignAndColorPetals();
+  }
+
+  function selectFortunePetal(petalEl){
+    const colorKey = petalEl.dataset.fortuneColor;
+    if (!colorKey) return;
+    fortuneMode = false; // この選択で確定。以降のタップは通常の撫でに戻す
+    resetIdleTimer();
+    highlightPetal(petalEl, true);
+    setTimeout(() => highlightPetal(petalEl, false), 700);
+    showSpeech(generateFortuneResult(colorKey));
+    emotionMotion('happy');
+    scheduleFortuneColorRevert(1500); // 結果を見せてから花びらを黄色へ戻す
+  }
+
   petals.addEventListener('click', (e) => {
-    e.stopPropagation(); // .stage側の通常タップ反応（petMotion）とは分ける
-    petalFortune();
+    e.stopPropagation(); // .stage側の通常タップ処理と二重発火しないよう常に伝播を止める
+    if (fortuneMode) {
+      const petalEl = e.target.closest('.petal-shape');
+      if (petalEl) selectFortunePetal(petalEl);
+    } else {
+      // 占いモードでないときは、花びらタップも花本体を撫でた時と全く同じ扱いにする
+      resetIdleTimer();
+      petMotion();
+    }
   });
+
+  const fortuneBtn = document.getElementById('fortuneBtn');
+  if (fortuneBtn) {
+    fortuneBtn.addEventListener('click', startFortuneMode);
+  }
 
   // --- 星空（ちらつき） ---
   const sc = document.getElementById('starfield');
