@@ -1040,7 +1040,7 @@
   }
 
   function petMotion(){
-    // 会話モーション（emotionMotion）が発火中はそちらを優先し、花の揺れは重ねない
+    // 会話モーション（emotionMotion）が発火中はそちらを優先し、花の揺れ・葉っぱの万歳は重ねない
     const flowerBusy = EMOTION_TYPES.some(t => flower.classList.contains('emo-' + t));
 
     if (!reduceMotion && !flowerBusy) {
@@ -1050,7 +1050,7 @@
       petFlowerTimer = setTimeout(() => flower.classList.remove('pet-sway'), 1100);
     }
 
-    if (!reduceMotion) {
+    if (!reduceMotion && !flowerBusy) {
       void leafL.offsetWidth;
       leafL.classList.add('pet-leaf-up');
       leafR.classList.add('pet-leaf-up');
