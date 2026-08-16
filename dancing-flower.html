@@ -315,6 +315,18 @@
   }
   .chatbar button:disabled { opacity: 0.5; cursor: default; }
 
+  /* チャット入力欄のすぐ下・鉢の外側に、小さく控えめな命名方法の案内を表示 */
+  .naming-hint {
+    position: relative;
+    z-index: 1;
+    width: min(90vw, 360px);
+    margin: 8px auto 0;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.5);
+  }
+
   /* 会話と記憶についての説明（植木鉢の外側・下に小さく配置） */
   .privacy-note {
     position: relative;
@@ -408,6 +420,8 @@
       </div>
     </div>
   </div>
+
+  <div class="naming-hint">※名前をつけるときは「○○にするね」のように話しかけてください。</div>
 
   <div class="privacy-note">
     <button type="button" id="privacyToggle" class="privacy-toggle" aria-expanded="false" aria-controls="privacyPanel">会話と記憶について</button>
