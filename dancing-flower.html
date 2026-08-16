@@ -552,12 +552,11 @@
     border: 7px solid transparent;
     border-top-color: #fffaf2;
   }
-  /* 鉢の上フチそのものをチャットUIの外枠として見せる。
-     SVG側の鉢フチ（planter.svgのrect、色は同じ#f2b483〜#c97a45系）の
-     真上に重なる位置に置き、上明るく下暗いグラデーションと角丸・
-     軽い立体感（inset側のハイライト＋外側のドロップシャドウ）で、
-     「フチが少し厚くなってチャットバーを内側に収めている」ように見せる。
-     鉢本体の輪郭（planter.svg）自体は変更していない。
+  /* チャットUIの外枠＝鉢の上フチそのもの、という単一のフチに見せる。
+     以前はplanter.svg側にもrectでリムを描いていたため二重フチに見えて
+     いたので、SVG側のリムは削除し、このCSS側の.pot-rimだけを鉢の
+     最上部（top:0%）に配置している。鉢本体（planter.svgのpath）の
+     輪郭自体は変更していない。
      .pot-panel（左右11.5%インセット）には含めず.pot直下に独立させ、
      鉢の上フチ幅の90〜95%程度（left/right:4%）まで広げている。
      フチ付近は鉢の輪郭がほぼ全幅あるため、この広さでもはみ出さない。 */
@@ -565,7 +564,7 @@
     position: absolute;
     left: 4%;
     right: 4%;
-    top: 6%;
+    top: 0%;
     z-index: 4;
     display: flex;
     align-items: center;
