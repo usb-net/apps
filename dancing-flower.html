@@ -58,6 +58,78 @@
   .flower.excited { animation-duration: 0.55s; }
   .flower.happy   { animation-duration: 1.1s; }
 
+  /* 会話内容に応じた感情モーション（emotionMotion()で付け外しする。idle=sway/petalWiggleへ戻る） */
+  @keyframes emoHappy {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    15%  { transform: rotate(-6deg) translateY(-3px); }
+    35%  { transform: rotate(6deg) translateY(-3px); }
+    55%  { transform: rotate(-5deg) translateY(-2px); }
+    75%  { transform: rotate(5deg) translateY(-2px); }
+    90%  { transform: rotate(-2deg) translateY(0); }
+  }
+  .flower.emo-happy { animation: emoHappy 1.6s ease-in-out 1; }
+
+  @keyframes petalBounce {
+    0%, 100% { transform: scale(1); }
+    25%  { transform: scale(1.05); }
+    50%  { transform: scale(0.97); }
+    75%  { transform: scale(1.03); }
+  }
+  .petals.emo-happy { animation: petalBounce 1.6s ease-in-out 1; }
+
+  @keyframes emoExcited {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    10% { transform: rotate(-10deg) translateY(-6px); }
+    20% { transform: rotate(10deg) translateY(-6px); }
+    30% { transform: rotate(-9deg) translateY(-5px); }
+    40% { transform: rotate(9deg) translateY(-5px); }
+    50% { transform: rotate(-7deg) translateY(-4px); }
+    60% { transform: rotate(7deg) translateY(-4px); }
+    75% { transform: rotate(-4deg) translateY(-2px); }
+    88% { transform: rotate(3deg) translateY(0); }
+  }
+  .flower.emo-excited { animation: emoExcited 0.9s ease-in-out 1; }
+
+  @keyframes emoSurprise {
+    0%   { transform: scale(1) translateY(0); }
+    30%  { transform: scale(1.12) translateY(-10px); }
+    55%  { transform: scale(1.05) translateY(-4px); }
+    100% { transform: scale(1) translateY(0); }
+  }
+  .flower.emo-surprise { animation: emoSurprise 0.45s ease-out 1; }
+
+  @keyframes emoThinking {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(var(--think-dir, -4deg)); }
+  }
+  .flower.emo-thinking { animation: emoThinking 1.2s ease-in-out 1 forwards; }
+
+  @keyframes emoShy {
+    0%, 100% { transform: rotate(0deg) scale(0.97); }
+    25% { transform: rotate(-2deg) scale(0.95); }
+    50% { transform: rotate(2deg) scale(0.96); }
+    75% { transform: rotate(-1deg) scale(0.97); }
+  }
+  .flower.emo-shy { animation: emoShy 1.4s ease-in-out 1; }
+
+  @keyframes emoSad {
+    0%   { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(6px) rotate(-1deg); }
+  }
+  .flower.emo-sad { animation: emoSad 1.3s ease-in-out 1 forwards; }
+
+  @keyframes emoDance {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    10% { transform: rotate(-8deg); }
+    20% { transform: rotate(8deg); }
+    30% { transform: rotate(-8deg); }
+    40% { transform: rotate(8deg); }
+    55% { transform: rotate(-5deg) translateY(-8px); }
+    70% { transform: rotate(5deg) translateY(-6px); }
+    85% { transform: rotate(-2deg) translateY(-2px); }
+  }
+  .flower.emo-dance { animation: emoDance 2s ease-in-out 1; }
+
   @keyframes sway {
     0%   { transform: rotate(calc(-1deg * var(--amp))) translateY(0); }
     25%  { transform: rotate(calc(0.6deg * var(--amp))) translateY(calc(-2px * var(--amp))); }
@@ -378,8 +450,48 @@
   }
   .privacy-reset:hover { color: #fff; border-color: rgba(255,255,255,0.45); }
 
+  /* ほかのアプリへのリンク（「会話と記憶について」よりさらに下・控えめな半透明ボタン） */
+  .other-apps {
+    position: relative;
+    z-index: 1;
+    width: min(90vw, 360px);
+    margin: 14px auto 24px;
+    text-align: center;
+  }
+  .other-apps-title {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 8px;
+  }
+  .other-apps-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  .other-apps-links a {
+    flex: 0 1 auto;
+    padding: 6px 14px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    font-size: 11px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .other-apps-links a:hover,
+  .other-apps-links a:focus-visible {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-color: rgba(255,255,255,0.4);
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .flower, .petals { animation: none; }
+    /* emo-* クラスは.flower/.petals単体より詳細度が高いため、
+       !importantで確実に大きな動きを抑える */
+    .flower, .petals { animation: none !important; }
   }
 </style>
 </head>
@@ -430,6 +542,15 @@
       <p class="privacy-body">この花の会話履歴は、このブラウザ内に保存されます。サイト運営者が、ブラウザに保存された会話履歴を一覧で確認する仕組みはありません。</p>
       <p class="privacy-note-text">天気情報：<a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a></p>
       <button type="button" id="resetMemoryBtn" class="privacy-reset">会話をリセット</button>
+    </div>
+  </div>
+
+  <div class="other-apps">
+    <div class="other-apps-title">ほかのアプリ</div>
+    <div class="other-apps-links">
+      <a href="block-battle.html">テトリス</a>
+      <a href="othello.html">オセロ</a>
+      <a href="talk-cards.html">はなしのたね</a>
     </div>
   </div>
 
@@ -486,6 +607,7 @@
 
   // --- 揺れ制御 ---
   const flower = document.getElementById('flower');
+  const petals = document.getElementById('petals');
 
   function setLevel(level){
     // level 0〜1 で揺れの強さを決める
@@ -496,6 +618,58 @@
   }
 
   setLevel(0.05);
+
+  // --- 会話内容に応じた感情モーション ---
+  // idle（通常の揺れ）以外の状態はCSSクラスの付け外しだけで表現し、
+  // 一定時間後に自動でidleへ戻す。常に1つの感情クラスしか付けないことで
+  // 複数のアニメーションが同時に重ならないようにする。
+  const EMOTION_TYPES = ['happy', 'excited', 'surprise', 'thinking', 'shy', 'sad', 'dance'];
+  const EMOTION_DURATIONS = {
+    happy: 1600,
+    excited: 900,
+    surprise: 450,
+    thinking: 1200,
+    shy: 1400,
+    sad: 1300,
+    dance: 2000,
+  };
+  let emotionTimer = null;
+  function emotionMotion(type){
+    clearTimeout(emotionTimer);
+    // 既存の感情クラスを一旦すべて外す（重ね掛け防止）
+    for (const t of EMOTION_TYPES) {
+      flower.classList.remove('emo-' + t);
+      petals.classList.remove('emo-' + t);
+    }
+    if (reduceMotion || type === 'idle' || !EMOTION_DURATIONS[type]) return;
+
+    if (type === 'thinking') {
+      // 左右どちらかにゆっくり傾く
+      flower.style.setProperty('--think-dir', Math.random() < 0.5 ? '-4deg' : '4deg');
+    }
+    // 同じ感情が連続しても確実にアニメーションを最初から再生させる
+    void flower.offsetWidth;
+    flower.classList.add('emo-' + type);
+    if (type === 'happy') petals.classList.add('emo-happy');
+
+    emotionTimer = setTimeout(() => {
+      flower.classList.remove('emo-' + type);
+      if (type === 'happy') petals.classList.remove('emo-happy');
+    }, EMOTION_DURATIONS[type]);
+  }
+
+  // reply/statusの内容からごく簡単に状態を判定する
+  function detectEmotion(status, reply){
+    const text = `${status || ''} ${reply || ''}`;
+    if (/びっくり|驚|わっ|えっ/.test(text)) return 'surprise';
+    if (/照れ|はずかし|てれ/.test(text)) return 'shy';
+    if (/しょんぼり|困|悲し|さみし|見つけられ/.test(text)) return 'sad';
+    if (/考え|うーん|難し|悩/.test(text)) return 'thinking';
+    if (/踊|ダンス|ノリノリ/.test(text)) return 'dance';
+    if (/テンション|わくわく|興奮|盛り上が/.test(text)) return 'excited';
+    if (/嬉し|うれし|楽し|好き|いいね/.test(text)) return 'happy';
+    return 'happy'; // 該当なしの場合も、これまで通り軽く嬉しそうに反応する
+  }
 
   // --- まばたき（数秒おきにランダム、時々二回まばたき） ---
   const eyes = document.querySelectorAll('.eye');
@@ -638,10 +812,6 @@
     speech.textContent = text;
     speech.classList.add('show');
   }
-  function danceBurst(){
-    setLevel(0.6);
-    setTimeout(() => setLevel(0.05), 1200);
-  }
   let talkFlickerTimer = null;
   function startTalkingEyes(){
     if (reduceMotion) return;
@@ -720,7 +890,7 @@
       saveHistory(history);
       if (status) potAbout.textContent = status;
       showSpeech(reply);
-      danceBurst();
+      emotionMotion(detectEmotion(status, reply));
       flickerFor(Math.min(4000, 900 + reply.length * 90)); // 喋る長さぶん明滅
     } catch(e) {
       showSpeech('うまくお喋りできないみたい…（通信できる環境で試してね）');
