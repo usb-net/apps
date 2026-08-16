@@ -48,6 +48,12 @@
   }
   .stars canvas { display: block; }
 
+  /* 花・茎・葉（.flower）と撫でエフェクト（.pet-effect-layer、.stageの子で
+     .stage基準の絶対配置）をまとめて少しだけ下へずらす。
+     植木鉢（.pot）や.pot-panel内のUIは別要素なのでこの影響を受けない。
+     .flower自体はsway/emotionMotion/petMotionでtransformを常時使っているため
+     そこに直接transformを足すと上書きされてしまう。.stage側にかけることで
+     子要素どうしの相対位置・アニメーションを崩さずに全体だけ移動できる。 */
   .stage {
     position: relative;
     z-index: 1;
@@ -57,6 +63,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    transform: translateY(20px);
   }
 
   /* 揺れる本体（花全体） */
@@ -343,17 +350,20 @@
   /* 花・茎・葉は同じ.flower内の兄弟要素なので、sway/emotionMotion/petMotionの
      揺れはこれまで通り.flower単位でまとめて動く（茎だけ別に揺れることはない）。
      ここでは接合部の見え方だけを調整する：
-     ・茎の上端を.head（花の裏側）へ深めに潜り込ませ、透き間が見えないようにする
-       （.headの下端＝flower-sizeの80%地点に対し、上端がそれより十分上に来る高さにする）
+     ・茎の上端を花びらの下端より更に奥、黒い顔（.face、常に不透明な円）の
+       内側まで深く潜り込ませる。花びら同士の隙間に依存せず確実に隠れるよう、
+       花の中心にある顔の真裏まで届く高さにしている
+       （.faceは.headの中心46%径の円。y=58%あたりなら花びらの隙間があっても
+       中心の顔の真裏になるため隙間が見えない）
      ・茎の下端も鉢側へ深めに潜り込ませ、鉢との継ぎ目が浮いて見えないようにする
      ・z-index:-1のため.head（z-index未指定=前面）より必ず後ろに描画される */
   .stem {
     position: absolute;
-    bottom: -5%;
+    bottom: -8%;
     left: 50%;
     transform: translateX(-50%);
     width: 4%;
-    height: 33%;
+    height: 50%;
     background: #3a7d2c;
     border-radius: 5px;
     z-index: -1;
@@ -422,11 +432,12 @@
   .pot {
     position: relative;
     z-index: 1;
-    margin-top: -14px;
+    margin-top: -20px;
     width: min(90vw, 360px);
-    /* 「できること」案内の分だけ縦に必要なため、以前よりわずかに高さを確保する */
-    height: clamp(150px, 40vw, 176px);
-    min-height: 150px;
+    /* 機能一覧の読みやすい文字サイズ・行間、および鉢フチ(.pot-rim)の厚みぶん、
+       必要な分だけ高さを確保する */
+    height: clamp(256px, 56vw, 298px);
+    min-height: 256px;
   }
   /* 鉢本体のシルエットはSVG（SVG/planter.svg）を使用する。
      clip-path/polygonのカクカクした直線輪郭をやめ、リム＋滑らかに膨らむ側面＋
@@ -441,59 +452,58 @@
     display: block;
   }
 
-  /* 植木鉢正面に埋め込まれた操作パネル（チャット／この花について／プロフィール、背景は透明）。
-     SVGの鉢は下部が丸くすぼまる形状のため、旧来のclip-path版より左右・下方向の
-     余白を少し広めに取り、鉢の輪郭からはみ出さないようにしている。 */
+  /* 植木鉢正面に埋め込まれた操作パネル（ステータス／機能一覧、背景は透明）。
+     チャットUI（.pot-rim）だけは鉢の上フチ幅いっぱいまで広げたいので、
+     .pot-panelには含めず.pot直下の兄弟要素として独立させている
+     （.pot-panelは引き続き左右に余白を残し、鉢下部の丸いすぼまりに
+     はみ出さないようにする）。 */
   .pot-panel {
     position: absolute;
-    left: 14%;
-    right: 14%;
-    top: 8%;
-    bottom: 12%;
+    left: 11.5%;
+    right: 11.5%;
+    top: 28%;
+    bottom: 16%;
     z-index: 4;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    /* 鉢の中央ではなく上寄せにして、入力欄を鉢の上端に近づける
-       （入力欄→ステータス→できることの案内、の順序はそのまま維持） */
+    /* 鉢の中央ではなく上寄せにする。フチ(入力欄)は.pot-rimとして独立しており、
+       この.pot-panelはステータス→機能一覧の順で、フチの下に続けて表示する */
     justify-content: flex-start;
-    gap: 3px;
+    gap: 5px;
   }
   .pot-about {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.4;
     color: #fdf1e2;
     text-align: center;
     opacity: 0.9;
   }
-  /* 「プロフィール」の代わりに、できることの簡単な案内を表示する */
-  .pot-guide {
-    color: #fdf1e2;
-    opacity: 0.75;
-    border-top: 1px solid rgba(255,255,255,0.14);
-    padding-top: 2px;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .pot-guide-title {
-    font-size: 8.5px;
-    line-height: 1.15;
-    letter-spacing: 0.04em;
-    opacity: 0.75;
-    text-align: center;
-    margin-bottom: 1px;
-  }
+  /* 見出しは置かず、入力欄・ステータスの下へ機能一覧だけを自然に配置する。
+     鉢上の文字は全体を中央揃えにし、文字サイズ12〜13px・行間1.5〜1.6で
+     スマホでも読みやすくする。鉢の下側にも余白が残るよう、パネル側のbottom
+     insetと合わせて.pot自体の高さも必要な分だけ広げてある。 */
   .pot-guide-list {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 6px 0 3px;
+    border-top: 1px solid rgba(255,255,255,0.14);
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 2px;
   }
   .pot-guide-list li {
-    font-size: 8px;
-    line-height: 1.2;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #fdf1e2;
+    opacity: 0.88;
+  }
+  .pot-guide-emoji {
+    flex-shrink: 0;
+    margin-right: 0.5em;
   }
 
   /* 花の近くに浮かぶ吹き出し。
@@ -506,7 +516,7 @@
     position: relative;
     width: max-content;
     max-width: min(78vw, 250px);
-    text-align: center;
+    text-align: left;
     color: #fef7d0;
     font-size: 14px;
     line-height: 1.6;
@@ -542,9 +552,31 @@
     border: 7px solid transparent;
     border-top-color: #fffaf2;
   }
+  /* 鉢の上フチそのものをチャットUIの外枠として見せる。
+     SVG側の鉢フチ（planter.svgのrect、色は同じ#f2b483〜#c97a45系）の
+     真上に重なる位置に置き、上明るく下暗いグラデーションと角丸・
+     軽い立体感（inset側のハイライト＋外側のドロップシャドウ）で、
+     「フチが少し厚くなってチャットバーを内側に収めている」ように見せる。
+     鉢本体の輪郭（planter.svg）自体は変更していない。
+     .pot-panel（左右11.5%インセット）には含めず.pot直下に独立させ、
+     鉢の上フチ幅の90〜95%程度（left/right:4%）まで広げている。
+     フチ付近は鉢の輪郭がほぼ全幅あるため、この広さでもはみ出さない。 */
+  .pot-rim {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    top: 6%;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    padding: 7px 8px;
+    background: linear-gradient(180deg, #f2b483 0%, #c97a45 100%);
+    border-radius: 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.22);
+  }
   .chatbar {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     width: 100%;
   }
   .chatbar input {
@@ -568,13 +600,12 @@
   .chatbar button {
     flex-shrink: 0;
     white-space: nowrap;
-    min-width: 64px;
     border: none;
     background: var(--petal);
     color: #2a2200;
     font-weight: 600;
     border-radius: 22px;
-    padding: 0 18px;
+    padding: 0 12px;
     cursor: pointer;
     font-size: 14px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
@@ -724,22 +755,21 @@
 
     <div class="pot">
       <img class="pot-body" src="SVG/planter.svg" alt="" draggable="false">
-      <div class="pot-panel">
+      <div class="pot-rim">
         <div class="chatbar">
           <input id="chatInput" type="text" placeholder="花に話しかける…" autocomplete="off">
           <button id="chatSend">送信</button>
         </div>
+      </div>
+      <div class="pot-panel">
         <div class="pot-about" id="potAbout">はなしかけてみてね</div>
-        <div class="pot-guide">
-          <div class="pot-guide-title">こんなことができるよ</div>
-          <ul class="pot-guide-list">
-            <li>💬 話しかけるとおしゃべりする</li>
-            <li>🌤️ 今日や明日の天気を聞ける</li>
-            <li>🔮 「今日の運勢」で花びら占い</li>
-            <li>💕 花を触るとよろこぶ</li>
-            <li>🏷️ 好きな名前をつけられる</li>
-          </ul>
-        </div>
+        <ul class="pot-guide-list">
+          <li><span class="pot-guide-emoji">🌤</span>今日や明日の天気を聞ける</li>
+          <li><span class="pot-guide-emoji">🔮</span>今日の運勢を占える</li>
+          <li><span class="pot-guide-emoji">💬</span>名前を覚えてくれる</li>
+          <li><span class="pot-guide-emoji">💕</span>花を触るとよろこぶ</li>
+          <li><span class="pot-guide-emoji">🎵</span>好きな名前をつけられる</li>
+        </ul>
       </div>
     </div>
   </div>
