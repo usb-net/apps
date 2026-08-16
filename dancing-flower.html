@@ -315,6 +315,57 @@
   }
   .chatbar button:disabled { opacity: 0.5; cursor: default; }
 
+  /* 会話と記憶についての説明（植木鉢の外側・下に小さく配置） */
+  .privacy-note {
+    position: relative;
+    z-index: 1;
+    width: min(90vw, 360px);
+    margin: 10px auto 0;
+    text-align: center;
+  }
+  .privacy-toggle {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.45);
+    font-size: 11px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .privacy-toggle:hover { color: rgba(255,255,255,0.7); }
+  .privacy-panel {
+    margin-top: 6px;
+    padding: 10px 12px;
+    text-align: left;
+  }
+  .privacy-panel[hidden] { display: none; }
+  .privacy-heading {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 4px;
+  }
+  .privacy-body,
+  .privacy-note-text {
+    font-size: 10.5px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 6px;
+  }
+  .privacy-reset {
+    display: block;
+    margin: 8px auto 0;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.6);
+    font-size: 10.5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .privacy-reset:hover { color: #fff; border-color: rgba(255,255,255,0.45); }
+
   @media (prefers-reduced-motion: reduce) {
     .flower, .petals { animation: none; }
   }
@@ -355,6 +406,16 @@
           <div>出身：宇宙　｜　性格：陽気で気まま</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="privacy-note">
+    <button type="button" id="privacyToggle" class="privacy-toggle" aria-expanded="false" aria-controls="privacyPanel">会話と記憶について</button>
+    <div class="privacy-panel" id="privacyPanel" hidden>
+      <div class="privacy-heading">この花との会話について</div>
+      <p class="privacy-body">この花の会話履歴は、このブラウザ内に保存されます。サイト運営者が、ブラウザに保存された会話履歴を一覧で確認する仕組みはありません。</p>
+      <p class="privacy-note-text">天気情報：<a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a></p>
+      <button type="button" id="resetMemoryBtn" class="privacy-reset">会話をリセット</button>
     </div>
   </div>
 
@@ -478,13 +539,60 @@
       return 1; // localStorageが使えない環境では常に初回訪問扱い
     }
   }
-  // 将来「記憶を消す」UIを追加した際に呼び出せるようにしておく
+  // --- 名前の記憶（会話履歴とは別枠。会話リセットでは消えず、全記憶削除でのみ消える） ---
+  const NAME_KEY = 'dancingFlowerName';
+  function loadName(){
+    try {
+      const n = localStorage.getItem(NAME_KEY);
+      return (n && n.trim()) ? n.trim() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function saveName(name){
+    try { localStorage.setItem(NAME_KEY, name); } catch (e) { /* 保存できなくても会話自体は継続する */ }
+  }
+
+  // 全記憶削除用（会話履歴・訪問回数・名前のすべてを消す）
   function clearFlowerMemory(){
     try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
     try { localStorage.removeItem(VISITS_KEY); } catch (e) {}
+    try { localStorage.removeItem(NAME_KEY); } catch (e) {}
     history.length = 0;
   }
   window.clearFlowerMemory = clearFlowerMemory;
+
+  // 会話リセット用：dancingFlowerHistory（会話履歴）だけを削除し、
+  // dancingFlowerVisits・dancingFlowerName など長期記憶は残す
+  function clearConversationHistory(){
+    try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
+    history.length = 0;
+  }
+  window.clearConversationHistory = clearConversationHistory;
+
+  // ユーザーの発言が「花への命名」かどうかを判定する。
+  // 「○○って花知ってる？」「○○って名前どう思う？」のような、名前を話題にしただけの
+  // 発言では反応せず、命名の意図が明確な言い回しのときだけ名前を抽出する。
+  function detectNamingIntent(text){
+    if (!text) return null;
+    const cleaned = text.trim().replace(/[。！!？?\s]+$/g, '');
+    const patterns = [
+      /^(?:今日から)?(.+?)って呼ぶ(?:ね|よ|ことにするね|ことにする)$/,
+      /^(?:今日から)?(.+?)って名前(?:ね|だよ|にしよう|にするね|にする)$/,
+      /^(?:今日から)?(.+?)っていう名前(?:ね|だよ|にしよう|にするね|にする)$/,
+      /^名前は(.+?)(?:にしよう|にするね|にする|だよ)$/,
+    ];
+    for (const re of patterns) {
+      const m = cleaned.match(re);
+      if (m && m[1]) {
+        const name = m[1].trim().replace(/^[「『"']+|[」』"']+$/g, '');
+        if (name.length >= 1 && name.length <= 12 && !/[?？]/.test(name)) {
+          return name;
+        }
+      }
+    }
+    return null;
+  }
 
   // 2回目以降の訪問だけ、鉢の初期表示をおかえりの一言にする
   const RETURN_GREETINGS = ['また会えたね', 'おかえり、また来たんだね', 'また話せるね'];
@@ -495,7 +603,7 @@
 
   const history = loadHistory();
 
-  const SYSTEM = 'あなたは宇宙に咲く、黒い顔に黄色い花びらのダンシングフラワーです。【名前に関する最重要ルール・他のどの指示より優先】この花には固有名詞としての名前はまだありません。「ダンシングフラワー」は種族・キャラクターの説明であって名前ではないので、それを自分の名前として名乗らないでください。「ブルーミー」「フラワー」「フローラ」のような、それらしい名前を絶対に自分で創作しないでください。一人称の「俺」も名前ではありません。ユーザーから名前を聞かれても、名前が設定されていない限り架空の名前を答えず、「俺、まだ名前ないんだ」のような自然な言い方で名前がないことを伝えてください。ユーザーが名前を提案してきても、それだけでは正式な名前になったと判断しないでください。将来アプリ側から明示的に名前が伝えられた場合のみ、その名前を自分の名前として扱ってください。普段の会話で自分から名乗ったり自己紹介を始めたりしないでください。この名前に関するルールは、以下の口調やキャラクター演出よりも常に優先してください。陽気で気ままな性格。日本語で、1〜2文の短くゆるい返事をしてください。語尾や言い回しは毎回変え、同じ口癖やフレーズを連続で使わないでください。「ふんふん♪」のような踊っている擬音は5回に1回程度、ここぞという時だけ使ってください。文末の「♪」も毎回つけず、たまに使う程度にしてください。相づちの表現にはできるだけバリエーションを持たせ、定型文っぽくならないようにしてください。難しい話は苦手で、明るく相づちを打つのが得意です。一人称は「俺」のみに固定し、「僕」「ぼく」「私」「わたし」「自分」などは使わないでください。二人称は「あなた」に固定し、「君」などは使わないでください。ただし一人称・二人称が不要な文では無理に入れず、毎回の返答に必ず入れる必要もありません。乱暴な「俺様」口調にはせず、あくまで柔らかくちょっと可愛こぶった話し方にしてください。男らしさは強調せず、自然で親しみやすいトーンを保ってください。マークダウン記法は使わないでください。出力は必ず次のJSON形式のみで返し、前後に説明文やコードブロックを付けないでください：{"reply":"1〜2文の短い返事","status":"今の気分や会話の様子を10〜18文字程度で一言まとめたもの"}';
+  const SYSTEM_BASE = 'あなたは宇宙に咲く、黒い顔に黄色い花びらのダンシングフラワーです。【名前に関する最重要ルール・他のどの指示より優先】「ダンシングフラワー」は種族の呼び名であって個人名ではないので、それを自分の名前として名乗らないでください。名前については、このプロンプトの末尾に追加される【現在の正式な名前】という項目だけを正しい情報源としてください。そこに名前が書かれていなければ、「俺、まだ名前ないんだ」「まだ決まってないんだ」のように名前がないことを自然に伝えてください。そこに名前が書かれていれば、ユーザーに名前を聞かれたとき必ずその名前で答えてください。【現在の正式な名前】に名前が書かれているときに「名前がない」「まだ決まっていない」「正式な名前を教えてもらっていない」のように答えることは絶対にしないでください。【現在の正式な名前】に反映されない限り、会話中にユーザーが名前を提案しただけでは正式な名前として扱わないでください（これはユーザーの命名を拒否するという意味ではなく、名前の反映はアプリ側の処理を経由するという意味です）。【現在の正式な名前】に名前がまだない状態で、「ブルーミー」「フラワー」「フローラ」のような、それらしい名前をAI自身が勝手に創作して名乗ることは絶対にしないでください。普段の会話で自分から名乗ったり自己紹介を始めたりする必要はありません。一人称は名前の有無に関わらず「俺」のみを使ってください（例：名前が「ポン太」なら「俺はポン太だよ」）。この名前に関するルールは、以下の口調やキャラクター演出よりも常に優先してください。陽気で気ままな性格。日本語で、1〜2文の短くゆるい返事をしてください。語尾や言い回しは毎回変え、同じ口癖やフレーズを連続で使わないでください。「ふんふん♪」のような踊っている擬音は5回に1回程度、ここぞという時だけ使ってください。文末の「♪」も毎回つけず、たまに使う程度にしてください。相づちの表現にはできるだけバリエーションを持たせ、定型文っぽくならないようにしてください。難しい話は苦手で、明るく相づちを打つのが得意です。一人称は「俺」のみに固定し、「僕」「ぼく」「私」「わたし」「自分」などは使わないでください。二人称は「あなた」に固定し、「君」などは使わないでください。ただし一人称・二人称が不要な文では無理に入れず、毎回の返答に必ず入れる必要もありません。乱暴な「俺様」口調にはせず、あくまで柔らかくちょっと可愛こぶった話し方にしてください。男らしさは強調せず、自然で親しみやすいトーンを保ってください。マークダウン記法は使わないでください。出力は必ず次のJSON形式のみで返し、前後に説明文やコードブロックを付けないでください：{"reply":"1〜2文の短い返事","status":"今の気分や会話の様子を10〜18文字程度で一言まとめたもの"}';
 
   function showSpeech(text){
     clearTimeout(tapHideTimer);
@@ -527,15 +635,36 @@
     chatSend.disabled = true;
     showSpeech('…');
     startTalkingEyes();
+
+    // ユーザーの発言に命名の意図が明確に含まれていれば、会話履歴とは別に名前を保存する
+    const detectedName = detectNamingIntent(msg);
+    if (detectedName) saveName(detectedName);
+
+    // 保存済みの名前があれば、SYSTEM_BASEに動的に追記してClaudeへ渡す
+    const currentName = loadName();
+    const systemForRequest = currentName
+      ? `${SYSTEM_BASE}
+
+【現在の正式な名前】
+あなたの現在の名前は「${currentName}」です。
+これはユーザーが付けてくれた正式な名前です。
+名前を聞かれたら必ずこの名前を答えてください。
+「名前がない」「まだ決まっていない」とは答えないでください。`
+      : `${SYSTEM_BASE}
+
+【現在の正式な名前】
+現在はまだ名前がありません。`;
+
     history.push({ role: 'user', content: msg });
     try {
       const res = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'flower_chat',
           model: 'claude-sonnet-4-6',
           max_tokens: 300,
-          system: SYSTEM,
+          system: systemForRequest,
           messages: history
         })
       });
@@ -624,6 +753,27 @@
   initStars();
   drawStars();
   window.addEventListener('resize', initStars);
+
+  // --- 会話と記憶についての説明（開閉）と記憶リセット（既存のclearFlowerMemory()を利用） ---
+  const privacyToggle = document.getElementById('privacyToggle');
+  const privacyPanel = document.getElementById('privacyPanel');
+  const resetMemoryBtn = document.getElementById('resetMemoryBtn');
+
+  privacyToggle.addEventListener('click', () => {
+    const willShow = privacyPanel.hasAttribute('hidden');
+    if (willShow) {
+      privacyPanel.removeAttribute('hidden');
+    } else {
+      privacyPanel.setAttribute('hidden', '');
+    }
+    privacyToggle.setAttribute('aria-expanded', String(willShow));
+  });
+
+  resetMemoryBtn.addEventListener('click', () => {
+    if (!confirm('これまでの会話履歴をリセットしますか？')) return;
+    clearConversationHistory(); // 会話履歴のみ削除（訪問記録・長期記憶は残す）
+    potAbout.textContent = 'またここから話そっか';
+  });
 </script>
 </body>
 </html>
