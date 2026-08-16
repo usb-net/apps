@@ -175,67 +175,130 @@
     50%     { transform: rotate(calc(28deg + -4deg * var(--amp))); }
   }
 
-  .controls {
+  /* 花・茎・葉・植木鉢・操作パネルをひとつのキャラクターとして縦につなげる */
+  .planter {
     position: relative;
     z-index: 1;
-    margin-top: 34px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
   }
-  .mic-btn {
-    border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(6px);
-    color: #fff;
-    font-size: 15px;
-    padding: 13px 26px;
-    border-radius: 40px;
-    cursor: pointer;
-    letter-spacing: 0.04em;
-    transition: transform 0.1s, background 0.2s;
-  }
-  .mic-btn:active { transform: scale(0.96); }
-  .mic-btn.on { background: #d94a2b; border-color: #ff7a52; }
-  .mic-btn:focus-visible { outline: 3px solid #ffdd00; outline-offset: 2px; }
-  .hint { font-size: 12px; color: #9a9db5; height: 16px; }
 
+  /* 植木鉢（茎の下に一体化して配置。低く横長寄りのシンプルな台形） */
+  .pot {
+    position: relative;
+    z-index: 1;
+    margin-top: -14px;
+    width: min(90vw, 360px);
+    height: clamp(160px, 46vw, 190px);
+    min-height: 160px;
+  }
+  /* 鉢本体だけでシルエットを作る（上辺は広く、下辺は狭い台形。下の角だけ少し丸め） */
+  .pot-body {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    clip-path: polygon(
+      2% 0%, 98% 0%,
+      88% 94%, 80% 100%,
+      20% 100%, 12% 94%
+    );
+    background: linear-gradient(155deg, #e39a63 0%, #b96234 48%, #7c3a1a 100%);
+    box-shadow: inset 0 -10px 16px rgba(0,0,0,0.28);
+  }
+
+  /* 植木鉢正面に埋め込まれた操作パネル（チャット／この花について／プロフィール、背景は透明） */
+  .pot-panel {
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    top: 10%;
+    bottom: 10%;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 5px;
+  }
+  .pot-about {
+    font-size: 10px;
+    line-height: 1.3;
+    color: #fdf1e2;
+    text-align: center;
+    opacity: 0.92;
+  }
+  .pot-profile {
+    font-size: 9.5px;
+    line-height: 1.3;
+    color: #fdf1e2;
+    text-align: center;
+    opacity: 0.85;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 4px;
+  }
+  .pot-profile-title {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    opacity: 0.7;
+    margin-bottom: 1px;
+  }
+
+  /* 花の近くに浮かぶ吹き出し */
   .speech {
-    max-width: 260px;
-    min-height: 0;
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    margin-bottom: 10px;
+    transform: translateX(-50%) translateY(6px) scale(0.94);
+    width: max-content;
+    max-width: min(78vw, 250px);
     text-align: center;
     color: #fef7d0;
     font-size: 14px;
     line-height: 1.5;
     padding: 0 8px;
     opacity: 0;
-    transition: opacity 0.3s;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 2;
   }
   .speech.show {
     opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
     padding: 10px 14px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,221,0,0.25);
-    border-radius: 14px;
+    background: #fff;
+    color: #1a1a1a;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 16px;
+    overflow-wrap: break-word;
+  }
+  .speech.show::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: #fff;
   }
   .chatbar {
     display: flex;
     gap: 8px;
-    width: min(84vw, 320px);
+    width: 100%;
   }
   .chatbar input {
     flex: 1;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 22px;
-    padding: 11px 16px;
-    color: #fff;
-    font-size: 14px;
+    background: #fdf6ea;
+    border: 1px solid rgba(0,0,0,0.18);
+    border-radius: 20px;
+    padding: 8px 14px;
+    color: #3a2415;
+    font-size: 13px;
     outline: none;
   }
-  .chatbar input::placeholder { color: #8a8da5; }
-  .chatbar input:focus { border-color: rgba(255,221,0,0.5); }
+  .chatbar input::placeholder { color: #8a6a4f; }
+  .chatbar input:focus { border-color: #b96234; }
   .chatbar button {
     border: none;
     background: var(--petal);
@@ -255,31 +318,40 @@
 </head>
 <body>
   <div class="stars"><canvas id="starfield"></canvas></div>
-  <div class="stage">
-    <div class="flower" id="flower" style="--amp: 1;">
-      <div class="stem"></div>
-      <div class="leaf l"></div>
-      <div class="leaf r"></div>
-      <div class="head">
-        <div class="petals" id="petals">
-          <svg viewBox="0 0 500 500" id="petalSvg"></svg>
+  <div class="planter">
+    <div class="stage">
+      <div class="flower" id="flower" style="--amp: 1;">
+        <div class="stem"></div>
+        <div class="leaf l"></div>
+        <div class="leaf r"></div>
+        <div class="head">
+          <div class="petals" id="petals">
+            <svg viewBox="0 0 500 500" id="petalSvg"></svg>
+          </div>
+          <div class="face">
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+          </div>
         </div>
-        <div class="face">
-          <div class="eye left"></div>
-          <div class="eye right"></div>
+      </div>
+      <div class="speech" id="speech"></div>
+    </div>
+
+    <div class="pot">
+      <div class="pot-body"></div>
+      <div class="pot-panel">
+        <div class="chatbar">
+          <input id="chatInput" type="text" placeholder="花に話しかける…" autocomplete="off">
+          <button id="chatSend">送信</button>
+        </div>
+        <div class="pot-about" id="potAbout">はなしかけてみてね</div>
+        <div class="pot-profile">
+          <div class="pot-profile-title">プロフィール</div>
+          <div>種族：ダンシングフラワー</div>
+          <div>出身：宇宙　｜　性格：陽気で気まま</div>
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="controls">
-    <button class="mic-btn" id="micBtn">🎤 マイクで踊らせる</button>
-    <div class="speech" id="speech"></div>
-    <div class="chatbar">
-      <input id="chatInput" type="text" placeholder="花に話しかける…" autocomplete="off">
-      <button id="chatSend">送信</button>
-    </div>
-    <div class="hint" id="hint">タップでも反応します</div>
   </div>
 
 <script>
@@ -335,9 +407,6 @@
 
   // --- 揺れ制御 ---
   const flower = document.getElementById('flower');
-  const micBtn = document.getElementById('micBtn');
-  const hint = document.getElementById('hint');
-  let audioCtx, analyser, dataArr, rafId, micOn = false;
 
   function setLevel(level){
     // level 0〜1 で揺れの強さを決める
@@ -346,54 +415,6 @@
     flower.classList.toggle('excited', level > 0.35);
     flower.classList.toggle('happy', level > 0.12 && level <= 0.35);
   }
-
-  async function startMic(){
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const src = audioCtx.createMediaStreamSource(stream);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512;
-      src.connect(analyser);
-      dataArr = new Uint8Array(analyser.frequencyBinCount);
-      micOn = true;
-      micBtn.textContent = '⏹ 停止';
-      micBtn.classList.add('on');
-      hint.textContent = '音に反応しています';
-      loop();
-    } catch(e) {
-      hint.textContent = 'マイクを使えません（HTTPS環境が必要です）';
-    }
-  }
-
-  function stopMic(){
-    micOn = false;
-    cancelAnimationFrame(rafId);
-    if (audioCtx) audioCtx.close();
-    micBtn.textContent = '🎤 マイクで踊らせる';
-    micBtn.classList.remove('on');
-    hint.textContent = 'タップでも反応します';
-    setLevel(0.05);
-  }
-
-  function loop(){
-    analyser.getByteFrequencyData(dataArr);
-    let sum = 0;
-    for (let i = 0; i < dataArr.length; i++) sum += dataArr[i];
-    const avg = sum / dataArr.length / 255;      // 0〜1
-    const level = Math.min(1, Math.pow(avg * 2.4, 1.3));
-    setLevel(level);
-    rafId = requestAnimationFrame(loop);
-  }
-
-  micBtn.addEventListener('click', () => micOn ? stopMic() : startMic());
-
-  // タップで一瞬盛り上がる（マイクなしでも遊べる）
-  document.querySelector('.stage').addEventListener('click', () => {
-    if (micOn) return;
-    setLevel(0.8);
-    setTimeout(() => setLevel(0.05), 700);
-  });
 
   setLevel(0.05);
 
@@ -419,18 +440,20 @@
   const chatInput = document.getElementById('chatInput');
   const chatSend = document.getElementById('chatSend');
   const speech = document.getElementById('speech');
+  const potAbout = document.getElementById('potAbout');
   const WORKER_URL = 'https://usb-net.soneski300382.workers.dev';
   const history = [];
 
-  const SYSTEM = 'あなたは宇宙に咲く、黒い顔に黄色い花びらのダンシングフラワーです。陽気で気ままな性格。日本語で、1〜2文の短くゆるい返事をしてください。時々「ふんふん♪」など踊っている様子を混ぜても構いません。難しい話は苦手で、明るく相づちを打つのが得意です。マークダウン記法は使わないでください。';
+  const SYSTEM = 'あなたは宇宙に咲く、黒い顔に黄色い花びらのダンシングフラワーです。陽気で気ままな性格。日本語で、1〜2文の短くゆるい返事をしてください。語尾や言い回しは毎回変え、同じ口癖やフレーズを連続で使わないでください。「ふんふん♪」のような踊っている擬音は5回に1回程度、ここぞという時だけ使ってください。文末の「♪」も毎回つけず、たまに使う程度にしてください。相づちの表現にはできるだけバリエーションを持たせ、定型文っぽくならないようにしてください。難しい話は苦手で、明るく相づちを打つのが得意です。マークダウン記法は使わないでください。出力は必ず次のJSON形式のみで返し、前後に説明文やコードブロックを付けないでください：{"reply":"1〜2文の短い返事","status":"今の気分や会話の様子を10〜18文字程度で一言まとめたもの"}';
 
   function showSpeech(text){
+    clearTimeout(tapHideTimer);
     speech.textContent = text;
     speech.classList.add('show');
   }
   function danceBurst(){
     setLevel(0.6);
-    setTimeout(() => { if (!micOn) setLevel(0.05); }, 1200);
+    setTimeout(() => setLevel(0.05), 1200);
   }
   let talkFlickerTimer = null;
   function startTalkingEyes(){
@@ -466,13 +489,24 @@
         })
       });
       const data = await res.json();
-      const reply = (data.content || [])
+      const rawText = (data.content || [])
         .filter(b => b.type === 'text')
         .map(b => b.text)
-        .join('').trim() || 'ふんふん♪（うまく聞こえなかったみたい）';
+        .join('').trim();
+      let reply = '';
+      let status = '';
+      try {
+        const parsed = JSON.parse(rawText);
+        reply = (parsed.reply || '').trim();
+        status = (parsed.status || '').trim();
+      } catch (e) {
+        reply = rawText; // JSONで来なかった場合はそのまま返事として使う
+      }
+      if (!reply) reply = 'ふんふん♪（うまく聞こえなかったみたい）';
       history.push({ role: 'assistant', content: reply });
       // 履歴が長くなりすぎないよう直近10往復に制限
       if (history.length > 20) history.splice(0, history.length - 20);
+      if (status) potAbout.textContent = status;
       showSpeech(reply);
       danceBurst();
       flickerFor(Math.min(4000, 900 + reply.length * 90)); // 喋る長さぶん明滅
@@ -486,6 +520,20 @@
 
   chatSend.addEventListener('click', talk);
   chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') talk(); });
+
+  // --- タップで一瞬盛り上がる（時々ひとこと） ---
+  const tapPhrases = ['わっ！', 'ん〜？', 'ふふっ', 'おっと', 'なぁに？', 'きゃっ'];
+  let tapHideTimer = null;
+  document.querySelector('.stage').addEventListener('click', () => {
+    setLevel(0.8);
+    setTimeout(() => setLevel(0.05), 700);
+    if (Math.random() < 0.35) {
+      const phrase = tapPhrases[Math.floor(Math.random() * tapPhrases.length)];
+      showSpeech(phrase);
+      clearTimeout(tapHideTimer);
+      tapHideTimer = setTimeout(() => speech.classList.remove('show'), 1600);
+    }
+  });
 
   // --- 星空（ちらつき） ---
   const sc = document.getElementById('starfield');
